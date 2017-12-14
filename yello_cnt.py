@@ -5,29 +5,10 @@ from math import atan, degrees
 import urllib
 import socket
 
-# s = socket.socket()         
-# print "Socket successfully created"
-
 url="http://10.7.170.8:8080/shot.jpg"
 
 WINDOW_NAME = "GreenBallTracker"
 PICK_RADIUS = 160
-port = 12345
-
-# Next bind to the port
-# we have not typed any ip in the ip field
-# instead we have inputted an empty string
-# this makes the server listen to requests 
-# coming from other computers on the network
-# s.bind(("", port))        
-# print "socket binded to %s" %(port)
- 
-# # put the socket into listening mode
-# s.listen(5)     
-# print "socket is listening"  
-
-# c, addr = s.accept()     
-# print 'Got connection from', addr
 
 def calculate_time(image_x, image_y, ball_x, ball_y):
     slope = 0
@@ -70,7 +51,7 @@ def track(image):
     # Blur the mask
     bmask = cv2.GaussianBlur(mask, (5, 5), 0)
 
-    # cnts = cv2.findContours(bmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    _,cnts,_ = cv2.findContours(bmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # cnts = cnts[-2]
     center = None
@@ -78,69 +59,60 @@ def track(image):
     max_y = 0
     radius = 0
 
-    # if len(cnts) > 0:
-    #     # centroid
-    #     c = max(cnts, key=cv2.contourArea)
-    #     ((x, y), radius) = cv2.minEnclosingCircle(c)
-    #     M = cv2.moments(c)
-    #     center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-    #
-    #     # only proceed if the radius meets a minimum size
-    #     if radius > 30:
-    #         # draw the circle and centroid on the frame,
-    #         # then update the list of tracked pointsx 1080 y 1920 3
+    if len(cnts) > 0:
+        # centroid
+        c = max(cnts, key=cv2.contourArea)
+        ((x, y), radius) = cv2.minEnclosingCircle(c)
+        M = cv2.moments(c)
+        center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+        nearest_one = (int(x), int(y))
+        # only proceed if the radius meets a minimum size
+        # if radius > 30:
+        #     # draw the circle and centroid on the frame,
+        #     # then update the list of tracked pointsx 1080 y 1920 3
 
-    #         nearest_one = (int(x), int(y))
-    #         radius = int(radius)
-    #     #            cv2.circle(image, (int(x), int(y)), int(radius), (0, 0, 255), 2)
-    #     #            cv2.circle(image, center, 5, (255, 0, 0), -1)
+        #     nearest_one = (int(x), int(y))
+        #     radius = int(radius)
+        #            cv2.circle(image, (int(x), int(y)), int(radius), (0, 0, 255), 2)
+        #            cv2.circle(image, center, 5, (255, 0, 0), -1)
 
-    circles = cv2.HoughCircles(bmask, cv2.HOUGH_GRADIENT, 1, 30, param1=20, param2=30, minRadius=1, maxRadius=600)
-    if circles is not None:
-        # Need to understand what it is doing here
-        circles = np.uint16(np.around(circles))
-        for i in circles[0, :]:
-            if max_y < i[1] + i[2]:
-                max_y = i[1] + i[2]
-                nearest_one = (i[0], i[1])
-                radius = i[2]
-                print "radius", radius
     else:
         no_circle = True
         print "no circle"
 
+    # circles = cv2.HoughCircles(bmask, cv2.HOUGH_GRADIENT, 1, 30, param1=20, param2=30, minRadius=1, maxRadius=200)
+    # if circles is not None:
+    #     # Need to understand what it is doing here
+    #     circles = np.uint16(np.around(circles))
+    #     for i in circles[0, :]:
+    #         if max_y < i[1] + i[2]:
+    #             max_y = i[1] + i[2]
+    #             nearest_one = (i[0], i[1])
+    #             radius = i[2]
+    #             print "radius", radius
+    # else:
+    #     no_circle = True
+    #     print "no circle"
+
     # Plotting the nearest Circle
     if not no_circle:
-        combi_move = False
-        if radius < 30:
-          combi_move = True
-
-        turn_time = 0
         cv2.circle(image, nearest_one, int(radius), (0, 255, 0), 2)
 
         # Logic for moving right and left
         ball_x, ball_y = nearest_one
 
         if (image_y / 2) > (ball_x + radius):
-            turn_time = calculate_time(image_x, image_y, ball_x, ball_y)
-            # c.send("left " + str(turn_time))
-            if combi_move:
-              print 'forward'
+            turn_time = calcuate_time(image_x, image_y, ball_x, ball_y)
             print "Move Left"
 
         elif (image_y / 2) < (ball_x - radius):
             turn_time = calculate_time(image_x, image_y, ball_x, ball_y)
-            # c.send("right " + str(turn_time))
-            if combi_move:
-              print 'forward'
             print "Move Right"
 
         else:
             print "Move Forward"
             if radius >= PICK_RADIUS:
                 print "pick"
-                # c.send("pick ")
-            # c.send("forward")
 
         cv2.circle(image, nearest_one, 3, (255, 255, 255), 3)
 
