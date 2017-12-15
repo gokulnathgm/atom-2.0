@@ -42,8 +42,8 @@ def track(image):
     # Threshold the HSV image for only green colors
     # lower_green = np.array([20, 100, 100])
     # upper_green = np.array([200, 255, 255])
-    lower_green = np.array([10, 100, 100])
-    upper_green = np.array([40, 255, 255])
+    lower_green = np.array([110, 100, 100])
+    upper_green = np.array([130, 255, 255])
 
     # Threshold the HSV image to get only green colors
     mask = cv2.inRange(hsv, lower_green, upper_green)
@@ -51,7 +51,8 @@ def track(image):
     # Blur the mask
     bmask = cv2.GaussianBlur(mask, (5, 5), 0)
 
-    _,cnts,_ = cv2.findContours(bmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # _,cnts,_ = cv2.findContours(bmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cnts,_ = cv2.findContours(bmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # cnts = cnts[-2]
     center = None
@@ -102,7 +103,7 @@ def track(image):
         ball_x, ball_y = nearest_one
 
         if (image_y / 2) > (ball_x + radius):
-            turn_time = calcuate_time(image_x, image_y, ball_x, ball_y)
+            turn_time = calculate_time(image_x, image_y, ball_x, ball_y)
             print "Move Left"
 
         elif (image_y / 2) < (ball_x - radius):
