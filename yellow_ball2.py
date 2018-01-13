@@ -4,7 +4,7 @@ import time
 from math import atan, degrees
 import urllib
 import socket
-import cv2.cv as cv
+# import cv2.cv as cv
 
 s = socket.socket()         
 print "Socket successfully created"
@@ -43,8 +43,8 @@ def go_to_post(frame):
     hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
     lower_blue = np.array([110, 100, 100])
     upper_blue = np.array([130, 255, 255])
-    # _,cnts,_ = cv2.findContours(bmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        cnts,_ = cv2.findContours(bmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    _,cnts,_ = cv2.findContours(bmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # cnts,_ = cv2.findContours(bmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     center = None
     nearest_one = (0, 0)
     radius = 0
@@ -127,8 +127,8 @@ def track(image):
     #     #            cv2.circle(image, (int(x), int(y)), int(radius), (0, 0, 255), 2)
     #     #            cv2.circle(image, center, 5, (255, 0, 0), -1)
 
-    # circles = cv2.HoughCircles(bmask, cv2.HOUGH_GRADIENT, 1, 30, param1=20, param2=30, minRadius=20, maxRadius=200)
-    circles = cv2.HoughCircles(bmask, cv.CV_HOUGH_GRADIENT, 1, 30, param1=20, param2=30, minRadius=1, maxRadius=600)
+    circles = cv2.HoughCircles(bmask, cv2.HOUGH_GRADIENT, 1, 30, param1=20, param2=30, minRadius=20, maxRadius=200)
+    # circles = cv2.HoughCircles(bmask, cv.CV_HOUGH_GRADIENT, 1, 30, param1=20, param2=30, minRadius=1, maxRadius=600)
     if circles is not None:
         # Need to understand what it is doing here
         circles = np.uint16(np.around(circles))
