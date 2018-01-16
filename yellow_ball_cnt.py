@@ -4,64 +4,14 @@ import time
 from math import atan, degrees
 import urllib
 import socket
-# import cv2.cv as cv
-
-s = socket.socket()         
-print "Socket successfully created"
 
 url="http://10.7.170.8:8080/shot.jpg"
 
 WINDOW_NAME = "GreenBallTracker"
 PICK_RADIUS = 160
-port = 12345
-
-# Next bind to the port
-# we have not typed any ip in the ip field
-# instead we have inputted an empty string
-# this makes the server listen to requests 
-# coming from other computers on the network
-s.bind(("", port))        
-# print "socket binded to %s" %(port)
- 
-# # put the socket into listening mode
-s.listen(5)     
-print "socket is listening"  
-
-c, addr = s.accept()     
-print 'Got connection from', addr
 
 def goto_post(image):
-    image_x, image_y, color_code = image.shape
-    blur = cv2.GaussianBlur(image, (5, 5), 0)
-    hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
-    lower_blue = np.array([110, 100, 100])
-    upper_blue = np.array([130, 255, 255])
-    _,cnts,_ = cv2.findContours(bmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    # cnts,_ = cv2.findContours(bmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    center = None
-    nearest_one = (0, 0)
-    radius = 0
-    if len(cnts) > 0:
-        # centroid
-        c = max(cnts, key=cv2.contourArea)
-        ((x, y), radius) = cv2.minEnclosingCircle(c)
-        M = cv2.moments(c)
-        center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-        nearest_one = (int(x), int(y))
-        if radius < 30:
-            print 'move forward'
-            c.send("forward")
-            return False
-
-        else:
-            print 'Drop the ball'
-            return True
-
-    else:
-        # hard code the time to sleep
-        print 'move left'
-        c.send("left")
-        return False
+  pass
 
 def track(image):
 
@@ -82,11 +32,11 @@ def track(image):
     hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
     # Threshold the HSV image for only green colors
+    # lower_green = np.array([50, 100, 100])
+    # upper_green = np.array([70, 255, 255])
+
     lower_green = np.array([20, 100, 100])
     upper_green = np.array([30, 255, 255])
-
-    # lower_green = np.array([10, 100, 100])
-    # upper_green = np.array([40, 255, 255])
 
 
     # Threshold the HSV image to get only green colors
@@ -106,6 +56,8 @@ def track(image):
     if len(cnts) > 0:
         # centroid
         cnts1 = max(cnts, key=cv2.contourArea)
+        approx = cv2.approxPolyDP(cnts1,0.01*cv2.arcLength(cnts1,True),True)
+        print 'approx: ', approx
         ((x, y), radius) = cv2.minEnclosingCircle(cnts1)
         M = cv2.moments(cnts1)
         center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
@@ -122,36 +74,14 @@ def track(image):
             cv2.circle(image, nearest_one, 3, (255, 0, 0), 3)
             ball_x, ball_y = nearest_one
 
-            if (image_y / 2) > (ball_x + 300):
-                turn_time = calculate_time(image_x, image_y, ball_x, ball_y)
-                # c.send("left " + str(turn_time))
-                c.send('left')
+            if (image_y / 2) > (ball_x + 500):
                 print "Move Left"
-                # direction = "left"
-                # if combi_move:
-                #     time.sleep(0.5)
-                #     c.send("forward")
 
-            elif (image_y / 2) < (ball_x - 300):
-                turn_time = calculate_time(image_x, image_y, ball_x, ball_y)
-                # c.send("right " + str(turn_time))
-                c.send('right')
+            elif (image_y / 2) < (ball_x - 500):
                 print "Move Right"
-                # direction = "right"
-                # if combi_move:
-                #     time.sleep(0.5)
-                #     c.send("forward")
 
             else:
                 print "Move Forward"
-                c.send("forward")
-                # if radius >= PICK_RADIUS:
-                #     print "pick"
-                #     c.send("pick")
-                #     time.sleep(2)
-                #     return "pick"
-                # else:
-                #     c.send("forward")
 
             cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
             cv2.resizeWindow(WINDOW_NAME, 600,600)
@@ -161,7 +91,7 @@ def track(image):
         #            cv2.circle(image, (int(x), int(y)), int(radius), (0, 0, 255), 2)
         #            cv2.circle(image, center, 5, (255, 0, 0), -1)
     else:
-        c.send('right')
+        print 'Seek, right'
     return None
 
 
@@ -174,14 +104,14 @@ if __name__ == "__main__":
 
     while True:
 
-        # image = cv2.imread("1.jpg")
+        # img = cv2.imread("mat2.jpg")
         # (grabbed, frame) = image.read()
         imgResp = urllib.urlopen(url)
         imgNp = np.array(bytearray(imgResp.read()),dtype=np.uint8)
         img = cv2.imdecode(imgNp,-1)
 
         track(img)
-        # time.sleep(0.25)
+        # time.sleep(60)
 
         #             if not track(image):
         #                 break
