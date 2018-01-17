@@ -14,7 +14,7 @@ url="http://10.7.170.8:8080/shot.jpg"
 WINDOW_NAME = "GreenBallTracker"
 PICK_RADIUS = 160
 port = 12345
-
+counter = 0
 # Next bind to the port
 # we have not typed any ip in the ip field
 # instead we have inputted an empty string
@@ -64,6 +64,7 @@ def goto_post(image):
         return False
 
 def track(image):
+    global counter
 
     no_circle = False
     '''Accepts BGR image as Numpy array
@@ -111,7 +112,8 @@ def track(image):
         center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
     
         # only proceed if the radius meets a minimum size
-        if radius > 30:
+        if radius > 30: 
+
             # draw the circle and centroid on the frame,
             # then update the list of tracked pointsx 1080 y 1920 3
 
@@ -122,9 +124,9 @@ def track(image):
             cv2.circle(image, nearest_one, 3, (255, 0, 0), 3)
             ball_x, ball_y = nearest_one
 
-            if (image_y / 2) > (ball_x + 300):
-                turn_time = calculate_time(image_x, image_y, ball_x, ball_y)
+            if (image_y / 2) > (ball_x + 500):
                 # c.send("left " + str(turn_time))
+                time.sleep(2)
                 c.send('left')
                 print "Move Left"
                 # direction = "left"
@@ -132,9 +134,9 @@ def track(image):
                 #     time.sleep(0.5)
                 #     c.send("forward")
 
-            elif (image_y / 2) < (ball_x - 300):
-                turn_time = calculate_time(image_x, image_y, ball_x, ball_y)
+            elif (image_y / 2) < (ball_x - 500):
                 # c.send("right " + str(turn_time))
+                time.sleep(2)
                 c.send('right')
                 print "Move Right"
                 # direction = "right"
@@ -143,6 +145,8 @@ def track(image):
                 #     c.send("forward")
 
             else:
+                print 'counter: ', counter
+                counter += 1
                 print "Move Forward"
                 c.send("forward")
                 # if radius >= PICK_RADIUS:
@@ -161,7 +165,10 @@ def track(image):
         #            cv2.circle(image, (int(x), int(y)), int(radius), (0, 0, 255), 2)
         #            cv2.circle(image, center, 5, (255, 0, 0), -1)
     else:
-        c.send('right')
+        if counter > 200:
+            goto_post(image)
+        else:
+            c.send('right')
     return None
 
 
