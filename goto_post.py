@@ -4,18 +4,33 @@ import time
 from math import atan, degrees
 import urllib
 import socket
+# import cv2.cv as cv
 
+# s = socket.socket()         
 url="http://10.7.170.8:8080/shot.jpg"
 
 WINDOW_NAME = "GreenBallTracker"
-PICK_RADIUS = 160
+POST_RADIUS = 240
+port = 12345
+counter = 0
+# Next bind to the port
+# we have not typed any ip in the ip field
+# instead we have inputted an empty string
+# this makes the server listen to requests 
+# coming from other computers on the network
+# s.bind(("", port))        
+# print "socket binded to %s" %(port)
+ 
+# # put the socket into listening mode
+# s.listen(5)     
+# print "socket is listening"  
+
+# c, addr = s.accept()     
+# print 'Got connection from', addr
+
 
 def goto_post(image):
-  pass
 
-def track(image):
-
-    no_circle = False
     '''Accepts BGR image as Numpy array
        Returns: (x,y) coordinates of centroid if found
                 (-1,-1) if no centroid was found
@@ -35,8 +50,8 @@ def track(image):
     # lower_green = np.array([50, 100, 100])
     # upper_green = np.array([70, 255, 255])
 
-    lower_green = np.array([20, 100, 100])
-    upper_green = np.array([30, 255, 255])
+    lower_green = np.array([50, 100, 100])
+    upper_green = np.array([70, 255, 255])
 
 
     # Threshold the HSV image to get only green colors
@@ -68,18 +83,23 @@ def track(image):
             nearest_one = (int(x), int(y))
             radius = int(radius)
             print 'radius: ', radius
-            print 'nearest one: ', nearest_one
             cv2.circle(image, nearest_one, 3, (255, 0, 0), 3)
             ball_x, ball_y = nearest_one
 
-            if (image_y / 2) > (ball_x + 500):
-                print "Move Left"
+            # if (image_y / 2) > (ball_x + 500):
+            #     print "Move Left"
 
-            elif (image_y / 2) < (ball_x - 500):
-                print "Move Right"
+            # elif (image_y / 2) < (ball_x - 500):
+            #     print "Move Right"
 
+            # else:
+            #     print "Move Forward"
+
+            if radius > POST_RADIUS:
+                print 'Drop'
             else:
-                print "Move Forward"
+                print 'Forward'
+
 
             cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
             cv2.resizeWindow(WINDOW_NAME, 600,600)
@@ -92,8 +112,6 @@ def track(image):
         print 'Seek, right'
     return None
 
-
-# Test with input from camera
 if __name__ == "__main__":
 
     # camera = cv2.VideoCapture("Robo_videos/ball_tracking_example5.mp4")
@@ -102,17 +120,10 @@ if __name__ == "__main__":
 
     while True:
 
-        # img = cv2.imread("mat2.jpg")
+        # image = cv2.imread("1.jpg")
         # (grabbed, frame) = image.read()
         imgResp = urllib.urlopen(url)
         imgNp = np.array(bytearray(imgResp.read()),dtype=np.uint8)
         img = cv2.imdecode(imgNp,-1)
 
-        track(img)
-        # time.sleep(60)
-
-        #             if not track(image):
-        #                 break
-        #
-        #             if cv2.waitKey(1) & 0xFF == 27:
-        #                 break
+        goto_post(img)
