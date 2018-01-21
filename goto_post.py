@@ -6,7 +6,7 @@ import urllib
 import socket
 # import cv2.cv as cv
 
-# s = socket.socket()         
+s = socket.socket()         
 url="http://10.7.170.8:8080/shot.jpg"
 
 WINDOW_NAME = "GreenBallTracker"
@@ -18,15 +18,15 @@ counter = 0
 # instead we have inputted an empty string
 # this makes the server listen to requests 
 # coming from other computers on the network
-# s.bind(("", port))        
-# print "socket binded to %s" %(port)
+s.bind(("", port))        
+print "socket binded to %s" %(port)
  
 # # put the socket into listening mode
-# s.listen(5)     
-# print "socket is listening"  
+s.listen(5)     
+print "socket is listening"  
 
-# c, addr = s.accept()     
-# print 'Got connection from', addr
+c, addr = s.accept()     
+print 'Got connection from', addr
 
 
 def goto_post(image):
@@ -50,8 +50,8 @@ def goto_post(image):
     # lower_green = np.array([50, 100, 100])
     # upper_green = np.array([70, 255, 255])
 
-    lower_green = np.array([50, 100, 100])
-    upper_green = np.array([70, 255, 255])
+    lower_green = np.array([90, 100, 100])
+    upper_green = np.array([110, 255, 255])
 
 
     # Threshold the HSV image to get only green colors
@@ -86,19 +86,27 @@ def goto_post(image):
             cv2.circle(image, nearest_one, 3, (255, 0, 0), 3)
             ball_x, ball_y = nearest_one
 
-            # if (image_y / 2) > (ball_x + 500):
-            #     print "Move Left"
+            if (image_y / 2) > (ball_x + 500):
+                print "Move Left"
+                c.send("left")
 
-            # elif (image_y / 2) < (ball_x - 500):
-            #     print "Move Right"
+            elif (image_y / 2) < (ball_x - 500):
+                print "Move Right"
+                c.send("right")
 
-            # else:
-            #     print "Move Forward"
-
-            if radius > POST_RADIUS:
-                print 'Drop'
             else:
-                print 'Forward'
+                if radius > 190:
+                    c.send("drop")
+                    time.sleep(10)
+                else:
+                    print "Move Forward"
+                    c.send("forward")
+
+            # if radius > POST_RADIUS:
+            #     print 'Drop'
+            # else:
+            #     print 'Forward'
+
 
 
             cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
@@ -106,9 +114,8 @@ def goto_post(image):
             cv2.imshow(WINDOW_NAME, image)  
             if cv2.waitKey(1) & 0xFF == 27:
                 center = None
-        #            cv2.circle(image, (int(x), int(y)), int(radius), (0, 0, 255), 2)
-        #            cv2.circle(image, center, 5, (255, 0, 0), -1)
     else:
+        c.send("right")
         print 'Seek, right'
     return None
 
