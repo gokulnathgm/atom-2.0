@@ -17,6 +17,7 @@ WINDOW_NAME = "GreenBallTracker"
 PICK_RADIUS = 160
 port = 12345
 time_counter = 0
+initial = True
 # Next bind to the port
 # we have not typed any ip in the ip field
 # instead we have inputted an empty string
@@ -116,13 +117,15 @@ def goto_post(image):
     return False
 
 def track(image):
-    global time_counter
-    if len(sys.argv) > 1:
+    global time_counter, initial
+    if len(sys.argv) > 1 and initial:
+        initial = False
         c.send("initial")
-        time.sleep(35)
+        time.sleep(14)
+        time_counter = datetime.now()
     delta = datetime.now() - time_counter
     print 'Delta: ', delta.seconds
-    if delta.seconds > 30:
+    if delta.seconds > 20:
         status = False
         while True:
             if status:
