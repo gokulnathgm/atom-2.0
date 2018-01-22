@@ -213,6 +213,7 @@ def track(image):
 
 # Test with input from camera
 if __name__ == "__main__":
+    pause = raw_input()
     # camera = cv2.VideoCapture("Robo_videos/ball_tracking_example5.mp4")
 
     #     capture = cv2.VideoCapture(0)
