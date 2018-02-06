@@ -32,11 +32,11 @@ def track(image):
     hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
     # Threshold the HSV image for only green colors
-    # lower_green = np.array([50, 100, 100])
-    # upper_green = np.array([70, 255, 255])
+    lower_green = np.array([157, 100, 100])
+    upper_green = np.array([177, 255, 255])
 
-    lower_green = np.array([90, 100, 100])
-    upper_green = np.array([110, 255, 255])
+    # lower_green = np.array([20, 100, 100])
+    # upper_green = np.array([40, 255, 255])
 
 
     # Threshold the HSV image to get only green colors
@@ -59,6 +59,20 @@ def track(image):
         ((x, y), radius) = cv2.minEnclosingCircle(cnts1)
         M = cv2.moments(cnts1)
         center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+        area = M["m00"]
+        peri = cv2.arcLength(cnts1, True)
+        approx = cv2.approxPolyDP(cnts1, 0.04 * peri, True)
+        print 'approx: ', len(approx)
+        print 'radius: ', radius
+        print 'area: ', area
+        print 'perimeter: ', peri
+        img1 = image.copy()
+        cv2.drawContours(img1, cnts1, -1, (255,0,0), 3)
+        cv2.namedWindow('NEW', cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('NEW', 600,600)
+        cv2.imshow('NEW', img1)  
+        if cv2.waitKey(1) & 0xFF == 27:
+            exit
     
         # only proceed if the radius meets a minimum size
         if radius > 30:
@@ -102,13 +116,14 @@ if __name__ == "__main__":
 
     while True:
 
-        # img = cv2.imread("mat2.jpg")
-        # (grabbed, frame) = image.read()
-        imgResp = urllib.urlopen(url)
-        imgNp = np.array(bytearray(imgResp.read()),dtype=np.uint8)
-        img = cv2.imdecode(imgNp,-1)
+        img = cv2.imread("rose_circle.jpg")
+        # (grabbed, img) = image.read()
+        # imgResp = urllib.urlopen(url)
+        # imgNp = np.array(bytearray(imgResp.read()),dtype=np.uint8)
+        # img = cv2.imdecode(imgNp,-1)
 
         track(img)
+        # break
         # time.sleep(60)
 
         #             if not track(image):
