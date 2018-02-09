@@ -43,7 +43,7 @@ def goto_post(image):
     '''
 
     image_x, image_y, color_code = image.shape
-    print 'x', image_x, 'y', image_y, color_code
+    # print 'x', image_x, 'y', image_y, color_code
 
     # Blur the image to reduce noise
     blur = cv2.GaussianBlur(image, (5, 5), 0)
@@ -74,9 +74,12 @@ def goto_post(image):
         ((x, y), radius) = cv2.minEnclosingCircle(cnts1)
         M = cv2.moments(cnts1)
         center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+        peri = cv2.arcLength(cnts1, True)
+        approx = cv2.approxPolyDP(cnts1, 0.04 * peri, True)
+        contour_edges = len(approx)
     
         # only proceed if the radius meets a minimum size
-        if radius > 30:
+        if radius > 30 and contour_edges >= 4:
             # draw the circle and centroid on the frame,
             # then update the list of tracked pointsx 1080 y 1920 3
 
@@ -142,7 +145,7 @@ def track(image):
     '''
 
     image_x, image_y, color_code = image.shape
-    print 'x', image_x, 'y', image_y, color_code
+    # print 'x', image_x, 'y', image_y, color_code
 
     # Blur the image to reduce noise
     blur = cv2.GaussianBlur(image, (5, 5), 0)
@@ -175,9 +178,11 @@ def track(image):
         ((x, y), radius) = cv2.minEnclosingCircle(cnts1)
         M = cv2.moments(cnts1)
         center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-    
+        peri = cv2.arcLength(cnts1, True)
+        approx = cv2.approxPolyDP(cnts1, 0.04 * peri, True)
+        contour_edges = len(approx)
         # only proceed if the radius meets a minimum size
-        if radius > 30: 
+        if radius > 30 and contour_edges >= 4: 
 
             # draw the circle and centroid on the frame,
             # then update the list of tracked pointsx 1080 y 1920 3
