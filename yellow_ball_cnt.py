@@ -32,11 +32,11 @@ def track(image):
     hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
     # Threshold the HSV image for only green colors
-    lower_green = np.array([157, 100, 100])
-    upper_green = np.array([177, 255, 255])
+    # lower_green = np.array([157, 100, 100])
+    # upper_green = np.array([177, 255, 255])
 
-    # lower_green = np.array([20, 100, 100])
-    # upper_green = np.array([40, 255, 255])
+    lower_green = np.array([20, 100, 100])
+    upper_green = np.array([40, 255, 255])
 
 
     # Threshold the HSV image to get only green colors
@@ -116,7 +116,7 @@ if __name__ == "__main__":
 
     while True:
 
-        img = cv2.imread("rose_circle.jpg")
+        img = cv2.imread("smiley2.jpg")
         # (grabbed, img) = image.read()
         # imgResp = urllib.urlopen(url)
         # imgNp = np.array(bytearray(imgResp.read()),dtype=np.uint8)
