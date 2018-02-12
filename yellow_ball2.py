@@ -121,6 +121,7 @@ def goto_post(image):
 
 def track(image):
     global time_counter, initial
+    prev_dir = 'right'
     if len(sys.argv) > 1 and initial:
         initial = False
         c.send("initial")
@@ -193,31 +194,33 @@ def track(image):
             print 'area: ', area
             print 'perimeter: ', peri
 
-            if aspect_ratio >= 0.78 and aspect_ratio <= 1.2 and contour_edges >= 4:
-                nearest_one = (int(x), int(y))
-                print 'nearest one: ', nearest_one
-                cv2.circle(image, nearest_one, 3, (255, 0, 0), 3)
-                ball_x, ball_y = nearest_one
+            nearest_one = (int(x), int(y))
+            cv2.circle(image, nearest_one, 3, (255, 0, 0), 3)
+            ball_x, ball_y = nearest_one
 
-                if (image_y / 2) > (ball_x + 500):
-                    c.send('left')
-                    print "Move Left"
+            if (image_y / 2) > (ball_x + 500):
+                prev_dir = 'left'
+                c.send('left')
+                print "Move Left"
 
-                elif (image_y / 2) < (ball_x - 500):
-                    c.send('right')
-                    print "Move Right"
+            elif (image_y / 2) < (ball_x - 500):
+                prev_dir = 'right'
+                c.send('right')
+                print "Move Right"
 
-                else:
-                    c.send("forward")
-                    print "Move Forward"
-
-                cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
-                cv2.resizeWindow(WINDOW_NAME, 600,600)
-                cv2.imshow(WINDOW_NAME, image)  
-                if cv2.waitKey(1) & 0xFF == 27:
-                    center = None
+            else:
+                c.send("forward")
+                print "Move Forward"
+                if not aspect_ratio >= 0.78 or not aspect_ratio <= 1.2 or not contour_edges >= 4:
+                    c.send(prev_dir)
+                    print "Previous direction --> ", prev_dir
+            cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
+            cv2.resizeWindow(WINDOW_NAME, 600,600)
+            cv2.imshow(WINDOW_NAME, image)  
+            if cv2.waitKey(1) & 0xFF == 27:
+                center = None
     else:
-        c.send('right')
+        c.send('Found none --> Seek right')
     return None
 
 
