@@ -74,9 +74,14 @@ def goto_post(image):
         ((x, y), radius) = cv2.minEnclosingCircle(cnts1)
         M = cv2.moments(cnts1)
         center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+        area = M["m00"]
+        peri = cv2.arcLength(cnts1, True)
+        approx = cv2.approxPolyDP(cnts1, 0.04 * peri, True)
+        contour_edges = len(approx)
+        print 'approx: ', contour_edges
     
         # only proceed if the radius meets a minimum size
-        if radius > 30:
+        if radius > 30  and contour_edges >= 4 and area >= 35:
             # draw the circle and centroid on the frame,
             # then update the list of tracked pointsx 1080 y 1920 3
 
@@ -95,7 +100,8 @@ def goto_post(image):
                 c.send("right")
 
             else:
-                if radius > 190:
+                if radius > 170:
+                    print 'Drop....'
                     c.send("drop")
                     time.sleep(10)
                 else:

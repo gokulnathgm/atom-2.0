@@ -35,8 +35,8 @@ def track(image):
     # lower_green = np.array([157, 100, 100])
     # upper_green = np.array([177, 255, 255])
 
-    lower_green = np.array([20, 100, 100])
-    upper_green = np.array([30, 255, 255])
+    lower_green = np.array([90, 100, 100])
+    upper_green = np.array([110, 255, 255])
 
 
     # Threshold the HSV image to get only green colors

@@ -43,7 +43,7 @@ def goto_post(image):
     '''
 
     image_x, image_y, color_code = image.shape
-    # print 'x', image_x, 'y', image_y, color_code
+    print 'x', image_x, 'y', image_y, color_code
 
     # Blur the image to reduce noise
     blur = cv2.GaussianBlur(image, (5, 5), 0)
@@ -74,14 +74,9 @@ def goto_post(image):
         ((x, y), radius) = cv2.minEnclosingCircle(cnts1)
         M = cv2.moments(cnts1)
         center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-        area = M["m00"]
-        peri = cv2.arcLength(cnts1, True)
-        approx = cv2.approxPolyDP(cnts1, 0.04 * peri, True)
-        contour_edges = len(approx)
-        print 'approx: ', contour_edges
     
         # only proceed if the radius meets a minimum size
-        if radius > 30 and contour_edges >= 4 and area >= 35:
+        if radius > 30:
             # draw the circle and centroid on the frame,
             # then update the list of tracked pointsx 1080 y 1920 3
 
@@ -100,7 +95,7 @@ def goto_post(image):
                 c.send("right")
 
             else:
-                if radius > 170:
+                if radius > 190:
                     print "Post: Drop"
                     c.send("drop")
                     time.sleep(10)
@@ -147,7 +142,7 @@ def track(image):
     '''
 
     image_x, image_y, color_code = image.shape
-    # print 'x', image_x, 'y', image_y, color_code
+    print 'x', image_x, 'y', image_y, color_code
 
     # Blur the image to reduce noise
     blur = cv2.GaussianBlur(image, (5, 5), 0)
@@ -180,11 +175,9 @@ def track(image):
         ((x, y), radius) = cv2.minEnclosingCircle(cnts1)
         M = cv2.moments(cnts1)
         center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-        peri = cv2.arcLength(cnts1, True)
-        approx = cv2.approxPolyDP(cnts1, 0.04 * peri, True)
-        contour_edges = len(approx)
+    
         # only proceed if the radius meets a minimum size
-        if radius > 30 and contour_edges >= 4: 
+        if radius > 30: 
 
             # draw the circle and centroid on the frame,
             # then update the list of tracked pointsx 1080 y 1920 3
@@ -230,3 +223,4 @@ if __name__ == "__main__":
         imgNp = np.array(bytearray(imgResp.read()),dtype=np.uint8)
         img = cv2.imdecode(imgNp,-1)
         track(img)
+

@@ -220,7 +220,8 @@ def track(image):
             if cv2.waitKey(1) & 0xFF == 27:
                 center = None
     else:
-        c.send('Found none --> Seek right')
+        print 'Found none --> Seek right'
+        c.send('right')
     return None
 
 
