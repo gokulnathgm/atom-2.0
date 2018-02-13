@@ -94,10 +94,12 @@ def goto_post(image):
             if (image_y / 2) > (ball_x + 500):
                 print "Post: Move Left"
                 c.send("left")
+                return "left"
 
             elif (image_y / 2) < (ball_x - 500):
                 print "Post: Move Right"
                 c.send("right")
+                return "right"
 
             else:
                 if radius > 170:
@@ -105,10 +107,11 @@ def goto_post(image):
                     c.send("drop")
                     time.sleep(10)
                     time_counter = datetime.now()
-                    return True
+                    return "drop"
                 else:
                     print "Post: Move Forward"
                     c.send("forward")
+                    return "forward"
 
 
             cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
@@ -119,7 +122,7 @@ def goto_post(image):
     else:
         print 'Post: Seek, right'
         c.send("right")
-    return False
+        return "right"
 
 def track(image):
     global time_counter, initial
@@ -131,20 +134,23 @@ def track(image):
     delta = datetime.now() - time_counter
     print 'Delta: ', delta.seconds
     if delta.seconds > 20:
-        status = False
+        post_timeout = datetime.now()
+        status = ''
         while True:
-            if status:
+            if status == "drop":
                 image = img
                 break
             imgResp = urllib.urlopen(url)
             imgNp = np.array(bytearray(imgResp.read()),dtype=np.uint8)
             img = cv2.imdecode(imgNp,-1)
             status = goto_post(img)
-    '''Accepts BGR image as Numpy array
-       Returns: (x,y) coordinates of centroid if found
-                (-1,-1) if no centroid was found
-                None if user hit ESC
-    '''
+            if status == "right":
+                post_delta = datetime.now() - post_timeout
+                if post_timeout > 10:
+                    image = img
+                    break
+                else: 
+                    post_timeout = datetime.now()
 
     image_x, image_y, color_code = image.shape
     # print 'x', image_x, 'y', image_y, color_code
