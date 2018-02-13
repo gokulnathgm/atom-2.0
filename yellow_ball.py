@@ -12,6 +12,7 @@ s = socket.socket()
 print "Socket successfully created"
 
 url="http://10.7.170.8:8080/shot.jpg"
+# url="http://10.7.120.82:8080//shot.jpg"
 
 WINDOW_NAME = "GreenBallTracker"
 PICK_RADIUS = 160
@@ -74,14 +75,14 @@ def goto_post(image):
         ((x, y), radius) = cv2.minEnclosingCircle(cnts1)
         M = cv2.moments(cnts1)
         center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-        area = M["m00"]
-        peri = cv2.arcLength(cnts1, True)
-        approx = cv2.approxPolyDP(cnts1, 0.04 * peri, True)
-        contour_edges = len(approx)
-        print 'approx: ', contour_edges
+        # area = M["m00"]
+        # peri = cv2.arcLength(cnts1, True)
+        # approx = cv2.approxPolyDP(cnts1, 0.04 * peri, True)
+        # contour_edges = len(approx)
+        # print 'approx: ', contour_edges
     
         # only proceed if the radius meets a minimum size
-        if radius > 30 and contour_edges >= 4 and area >= 35:
+        if radius > 30:# and contour_edges >= 4 and area >= 35:
             # draw the circle and centroid on the frame,
             # then update the list of tracked pointsx 1080 y 1920 3
 
@@ -102,7 +103,7 @@ def goto_post(image):
                 return "right"
 
             else:
-                if radius > 170:
+                if radius > 155:
                     print "Post: Drop"
                     c.send("drop")
                     time.sleep(10)
@@ -135,6 +136,7 @@ def track(image):
     print 'Delta: ', delta.seconds
     if delta.seconds > 20:
         post_timeout = datetime.now()
+        drop_timeout = datetime.now()
         status = ''
         while True:
             if status == "drop":
@@ -146,11 +148,23 @@ def track(image):
             status = goto_post(img)
             if status == "right":
                 post_delta = datetime.now() - post_timeout
-                if post_timeout > 10:
+                if post_delta.seconds > 10:
                     image = img
+                    time_counter = datetime.now()
                     break
-                else: 
-                    post_timeout = datetime.now()
+            else: 
+                post_timeout = datetime.now()
+            if status == "forward":
+                drop_delta = datetime.now() - drop_timeout
+                if drop_delta.seconds > 18:
+                    c.send("dump")
+                    image = img
+                    time_counter = datetime.now()
+                    break
+                print 'Drop delta', drop_delta
+            else:
+                drop_timeout = datetime.now()
+            
 
     image_x, image_y, color_code = image.shape
     # print 'x', image_x, 'y', image_y, color_code
