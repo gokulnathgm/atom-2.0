@@ -5,7 +5,7 @@ from math import sqrt, acos, pi
 import urllib
 import socket
 
-POST_POINT = (1369, 538)
+POST_POINT = (1369, 558)
 MEET_POINT = (923, 571)
 center_front = ()
 
@@ -18,10 +18,10 @@ def three_point_angle(p0, p1, p2):
     return acos( (a+b-c) / sqrt(4*a*b) ) * 180/pi
 
 def two_point_distance(p0, p1):
-    return sqrt(((p0[0] - p1[0])**2)  + ((p0[0] - p1[1])**2))
+    return sqrt(((p0[0] - p1[0])**2)  - ((p0[0] - p[1])**2))
 
-def goto_meet_point(image):
-    global center_front
+def goto_target_point(image, target_point):
+    global center_back
     image_x, image_y, color_code = image.shape
     # Blur the image to reduce noise
     blur = cv2.GaussianBlur(image, (5, 5), 0)
@@ -77,10 +77,10 @@ def goto_meet_point(image):
         #   center_front = 0, area_front=0, radius_front=0
 
     #check if bot is in the other half of the MEET_POINT wrt the post
-    if center_front[0] < MEET_POINT[0] and center_back[0] < MEET_POINT[0]:
+    if center_front[0] < target_point[0] and center_back[0] < target_point[0]:
         print 'Upper Half!'
-        angle = three_point_angle(center_back, center_front, MEET_POINT)
-        print "angle", angle
+        angle = three_point_angle(center_back, center_front, target_point)
+        print 'Angle: ', angle
         if (angle >= 170 and angle <= 180) and (center_front[0] > center_back[0]):
             print 'Move straight to meet point...'
             return 'forward'
@@ -88,10 +88,10 @@ def goto_meet_point(image):
             print 'Turn to find a suitable angle...'
             return 'right'
 
-    if center_front[0] > MEET_POINT[0] and center_back[0] > MEET_POINT[0]:
+    if center_front[0] > target_point[0] and center_back[0] > target_point[0]:
         print 'Lower Half!'
-        angle = three_point_angle(center_back, center_front, MEET_POINT)
-        print "angle", angle
+        angle = three_point_angle(center_back, center_front, target_point)
+        print 'Angle: ', angle
         if (angle >= 170 and angle <= 180) and (center_front[0] < center_back[0]):
             print 'Move straight to meet point...'
             return 'forward'
@@ -100,10 +100,10 @@ def goto_meet_point(image):
             return 'right'
     else:
         print 'Middle region'
-        angle = three_point_angle(center_back, center_front, MEET_POINT)
-        print "angle", angle
+        angle = three_point_angle(center_back, center_front, target_point)
+        print 'Angle: ', angle
         if angle >= 170 and angle <= 180:
-            if (center_back[1] > center_front[1] > MEET_POINT[1]) or (center_back[1] > center_front[1] > MEET_POINT[1]):
+            if (center_back[1] > center_front[1] > target_point[1]) or (center_back[1] > center_front[1] > target_point[1]):
                 print 'Move straight to meet point...'
                 return 'forward'
             else:
@@ -118,9 +118,18 @@ if __name__ == "__main__":
         imgResp = urllib.urlopen(url)
         imgNp = np.array(bytearray(imgResp.read()), dtype=np.uint8)
         img = cv2.imdecode(imgNp, -1)
-        direction = goto_meet_point(img)
+        direction = goto_target_point(img, MEET_POINT)
         if direction == 'forward':
             distance_bot_meet = two_point_distance(MEET_POINT, center_front)
-            if distance_bot_meet <=100:
+            if distance_bot_meet <= 100:
                 print 'Stop the bot!'
+                while True:
+                    direction = goto_target_point(img, POST_POINT)
+                    if direction == 'forward':
+                        distance_bot_post = two_point_distance(POST_POINT, center_front)
+                        if distance_bot_post <= 100:
+                            print 'Drop the ball!'
+                            break
+                    else:
+                        print 'Keep turning to locate the post...'
 
