@@ -5,7 +5,7 @@ from math import atan, degrees, atan2
 import urllib
 import socket
 # import cv2.cv as cv
-POST_POINTS = (1344,626) #should hard code before game
+POST_POINTS = (1369,558) #should hard code before game
 POST_RADIUS = 240
 
 # s = socket.socket()
@@ -35,7 +35,8 @@ def show_image(image):
     cv2.waitKey(0)
 
 def get_slope(point):
-    slope = (POST_POINTS[0] - point[0]) / (POST_POINTS[1] - point[1])
+    slope = (POST_POINTS[0] - point[0]) / float((POST_POINTS[1] - point[1]))
+    print slope
     return  degrees(atan(slope))
 
 def move_towardds_post(image):
@@ -52,8 +53,8 @@ def move_towardds_post(image):
     hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
     #hsv for color pink
-    lower_front = np.array([141, 60, 171])
-    upper_front = np.array([183, 183, 230])
+    lower_front = np.array([157, 100, 100])
+    upper_front = np.array([177, 255, 255])
 
     # hsv for color blue
     lower_back = np.array([90, 100, 100])
@@ -98,8 +99,12 @@ def move_towardds_post(image):
     cv2.line(image, centerf, POST_POINTS, (0, 255, 0), 3)
     cv2.line(image, centerb, POST_POINTS, (0, 255, 0), 3)
     show_image(image)
+
     slopef = get_slope(centerf)
     slopeb = get_slope(centerb)
+    print slopef, slopeb
+    if slopeb == slopef:
+        print "Condition not handled yet"
     if slopeb>0 and slopef>0:
         if slopef > slopeb:
             print 'left'

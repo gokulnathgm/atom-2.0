@@ -2,22 +2,33 @@
 # from filedialog import askopenfilename
 # from PIL import Image, ImageTk
 # import tkSimpleDialog
-
+import urllib
 from Tkinter import *
 import tkSimpleDialog, tkMessageBox
 # from filedialog import askopenfilename
+import cv2
+import numpy as np
+
 from PIL import Image, ImageTk
+
 
 root = Tk()
 
+url="http://10.7.170.8:8080/shot.jpg"
+
+imgResp = urllib.urlopen(url)
+imgNp = np.array(bytearray(imgResp.read()),dtype=np.uint8)
+img = cv2.imdecode(imgNp,-1)
+cv2.imwrite("pink.jpg", img)
+
 #setting up a Tkinter canvas
-w = Canvas(root, width=1000, height=1000)
+w = Canvas(root, width=1440, height=1080)
 w.pack()
 
 #adding the image
 # File = askopenfilename(parent=root, initialdir="./",title='Select an image')
-original = Image.open('/home/qburst/Pictures/qq.png')
-original = original.resize((1000,1000)) #resize image
+original = Image.open('/home/qburst/robot/entethala.jpg')
+# original = original.resize((1000,1000)) #resize image
 img = ImageTk.PhotoImage(original)
 w.create_image(0, 0, image=img, anchor="nw")
 

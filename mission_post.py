@@ -5,22 +5,23 @@ from math import sqrt, acos, pi
 import urllib
 import socket
 
-POST_POINT = ()
-MEET_POINT = ()
+POST_POINT = (1369, 538)
+MEET_POINT = (923, 571)
+center_front = ()
 
 url = "http://10.7.170.27:8080/shot.jpg"
 
-def three_point_angle(p0, p1, p2)
+def three_point_angle(p0, p1, p2):
     a = (p1[0]-p0[0])**2 + (p1[1]-p0[1])**2
     b = (p1[0]-p2[0])**2 + (p1[1]-p2[1])**2
     c = (p2[0]-p0[0])**2 + (p2[1]-p0[1])**2
     return acos( (a+b-c) / sqrt(4*a*b) ) * 180/pi
 
 def two_point_distance(p0, p1):
-    return sqrt(((p0[0] - p1[0])**2)  - ((p0[0] - p[1])**2))
+    return sqrt(((p0[0] - p1[0])**2)  + ((p0[0] - p1[1])**2))
 
 def goto_meet_point(image):
-
+    global center_front
     image_x, image_y, color_code = image.shape
     # Blur the image to reduce noise
     blur = cv2.GaussianBlur(image, (5, 5), 0)
@@ -79,6 +80,7 @@ def goto_meet_point(image):
     if center_front[0] < MEET_POINT[0] and center_back[0] < MEET_POINT[0]:
         print 'Upper Half!'
         angle = three_point_angle(center_back, center_front, MEET_POINT)
+        print "angle", angle
         if (angle >= 170 and angle <= 180) and (center_front[0] > center_back[0]):
             print 'Move straight to meet point...'
             return 'forward'
@@ -89,6 +91,7 @@ def goto_meet_point(image):
     if center_front[0] > MEET_POINT[0] and center_back[0] > MEET_POINT[0]:
         print 'Lower Half!'
         angle = three_point_angle(center_back, center_front, MEET_POINT)
+        print "angle", angle
         if (angle >= 170 and angle <= 180) and (center_front[0] < center_back[0]):
             print 'Move straight to meet point...'
             return 'forward'
@@ -98,8 +101,9 @@ def goto_meet_point(image):
     else:
         print 'Middle region'
         angle = three_point_angle(center_back, center_front, MEET_POINT)
+        print "angle", angle
         if angle >= 170 and angle <= 180:
-            if (center_back[1] > center_front[1] > MEET_POINT[1]) or (center_back[1] > center_front[1] > MEET_POINT[1])
+            if (center_back[1] > center_front[1] > MEET_POINT[1]) or (center_back[1] > center_front[1] > MEET_POINT[1]):
                 print 'Move straight to meet point...'
                 return 'forward'
             else:
