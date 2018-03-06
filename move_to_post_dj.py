@@ -114,7 +114,6 @@ def goto_post(image):
     cv2.line(image, centerb, POST_POINTS, (0, 255, 0), 3)
     show_image(image)
     angle_for_reference = angle_for_dj(centerb, centerf)
-    import pdb;pdb.set_trace()
     print 'angle for refernce', angle_for_reference
     if centerf[1] > CLOSE_TO_POST_UPPER[1] and centerf[0] > CLOSE_TO_POST_UPPER[0] and\
        centerf[1] < CLOSE_TO_POST_LOWER[1] and centerf[0] > CLOSE_TO_POST_LOWER[0] and\
