@@ -5,8 +5,8 @@ from math import sqrt, acos, pi
 import urllib
 import socket
 
-POST_POINT = (1369, 558)
-MEET_POINT = (923, 571)
+POST_POINT = (1356, 554)
+MEET_POINT = (1006, 580)
 center_front = ()
 
 url = "http://10.7.170.27:8080/shot.jpg"
@@ -18,10 +18,10 @@ def three_point_angle(p0, p1, p2):
     return acos( (a+b-c) / sqrt(4*a*b) ) * 180/pi
 
 def two_point_distance(p0, p1):
-    return sqrt(((p0[0] - p1[0])**2)  - ((p0[0] - p[1])**2))
+    return sqrt(((p0[0] - p1[0])**2)  + ((p0[0] - p1[1])**2))
 
 def goto_target_point(image, target_point):
-    global center_back
+    global center_front
     image_x, image_y, color_code = image.shape
     # Blur the image to reduce noise
     blur = cv2.GaussianBlur(image, (5, 5), 0)
