@@ -5,7 +5,9 @@ from math import atan, degrees, atan2
 import urllib
 import socket
 # import cv2.cv as cv
-POST_POINTS = (1344,626) #should hard code before game
+POST_POINTS = (1344, 626)  # should hard code before game
+CLOSE_TO_POST_UPPER = (810, 475)  # should hard code before game
+CLOSE_TO_POST_LOWER = (810, 685)  # should hard code before game
 POST_RADIUS = 240
 
 # s = socket.socket()
@@ -111,45 +113,84 @@ def goto_post(image):
     cv2.line(image, centerf, POST_POINTS, (0, 255, 0), 3)
     cv2.line(image, centerb, POST_POINTS, (0, 255, 0), 3)
     show_image(image)
+    angle_for_reference = angle_for_dj(centerb, centerf)
+    print 'angle for refernce', angle_for_reference
 
-    slopef = get_slope(centerf)
-    slopeb= get_slope(centerb)
-    print slopef, slopeb
-    if (slopef < 0 and slopeb <0 ) or (slopef >0 and slopeb >0):
-        slopeb = abs(slopeb)
-        slopef = abs(slopef)
-        angle_for_reference = angle_for_dj(centerb, centerf)
-        print 'angle for refernce', angle_for_reference
-        if angle_for_reference < 10 and angle_for_reference > -15:
-            print 'forward'
-
-        elif slopef > slopeb:
-            #         rotate to left until slopes in a range
-            # c.send('right')
-            print 'right'
-        elif slopeb > slopef:
-            #         rotate to right until slopes in a range
-            # c.send('left')
-            print 'left'
-        #
-        # elif (abs(slopef - slopeb)) < 10:
-        #     if centerf[1] > centerb[1]:
-        #         # c.send() #rotate 180 for facing front to post and move forward
-        #         # c.send('right')
-        #         # time.sleep(2.2)
-        #         # c.send('forward')
-        #         print '180 and forward'
-        #     else:
-        #         # already focusing towards post
-        #         # c.send('forward')
-        #         print 'forward only'
+    if centerf[1] > CLOSE_TO_POST_UPPER[1] and centerf[0] > CLOSE_TO_POST_UPPER[0] and\
+       centerf[1] < CLOSE_TO_POST_LOWER[1] and centerf[0] > CLOSE_TO_POST_LOWER[0] and\
+       centerb[1] > CLOSE_TO_POST_UPPER[1] and centerb[0] > CLOSE_TO_POST_UPPER[0] and\
+       centerb[1] < CLOSE_TO_POST_LOWER[1] and centerb[0] > CLOSE_TO_POST_LOWER[0]:
+        if angle_for_reference < 190 and angle_for_reference > 170:
+            print 'back'
+            time.sleep(1)
+            print 'drop'
         else:
-            print "No condition satisfied RECHECK !!"
+            print 'right'
+    if angle_for_reference < 10 and angle_for_reference > -10:
+        print 'forward'
+    elif centerf[1] < CLOSE_TO_POST_UPPER[1] and centerf[0] > CLOSE_TO_POST_UPPER[0]:
+        if centerf[0] < centerb[0] + 10 and centerf[0] > centerb[0] - 10:
+            print 'forward'
+        elif centerf[0] > centerb[0]:
+            print 'right'
+        else:
+            print 'left'
+    elif centerf[1] > CLOSE_TO_POST_LOWER[1] and centerf[0] > CLOSE_TO_POST_LOWER[0]:
+        if centerf[0] < centerb[0] + 10 and centerf[0] > centerb[0] - 10:
+            print 'forward'
+        elif centerf[0] >= centerb[0]:
+            print 'left'
+        else:
+            print 'right'
+    elif centerf[1] >= POST_POINTS[1]:
+        if centerf[0] >= centerb[0]:
+            print 'left'
+        else:
+            print 'right'
+    elif centerf[1] < POST_POINTS[1]:
+        if centerf[0] > centerb[0]:
+            print 'right'
+        else:
+            print 'left'
 
-    elif slopeb < 0 and slopef >0 :
-        print 'left'
-    elif slopef < 0 and slopeb >0 :
-        print 'right'
+    # slopef = get_slope(centerf)
+    # slopeb= get_slope(centerb)
+    # print slopef, slopeb
+    # if (slopef < 0 and slopeb <0 ) or (slopef >0 and slopeb >0):
+    #     slopeb = abs(slopeb)
+    #     slopef = abs(slopef)
+    #     angle_for_reference = angle_for_dj(centerb, centerf)
+    #     print 'angle for refernce', angle_for_reference
+    #     if angle_for_reference < 10 and angle_for_reference > -15:
+    #         print 'forward'
+
+    #     elif slopef > slopeb:
+    #         #         rotate to left until slopes in a range
+    #         # c.send('right')
+    #         print 'right'
+    #     elif slopeb > slopef:
+    #         #         rotate to right until slopes in a range
+    #         # c.send('left')
+    #         print 'left'
+    #     #
+    #     # elif (abs(slopef - slopeb)) < 10:
+    #     #     if centerf[1] > centerb[1]:
+    #     #         # c.send() #rotate 180 for facing front to post and move forward
+    #     #         # c.send('right')
+    #     #         # time.sleep(2.2)
+    #     #         # c.send('forward')
+    #     #         print '180 and forward'
+    #     #     else:
+    #     #         # already focusing towards post
+    #     #         # c.send('forward')
+    #     #         print 'forward only'
+    #     else:
+    #         print "No condition satisfied RECHECK !!"
+
+    # elif slopeb < 0 and slopef >0 :
+    #     print 'left'
+    # elif slopef < 0 and slopeb >0 :
+    #     print 'right'
 
 if __name__ == "__main__":
 
