@@ -35,12 +35,10 @@ def show_image(image):
     cv2.waitKey(0)
 
 def get_slope(point):
-    slope = (POST_POINTS[1] - point[1]) / (POST_POINTS[0] - point[0])
-    x = (POST_POINTS[1] - point[1])
-    y = (POST_POINTS[0] - point[0])
-    return  degrees(atan2(y,x))
+    slope = (POST_POINTS[0] - point[0]) / (POST_POINTS[1] - point[1])
+    return  degrees(atan(slope))
 
-def goto_post(image):
+def move_towardds_post(image):
     '''Accepts BGR image as Numpy array
        Returns: (x,y) coordinates of centroid if found
                 (-1,-1) if no centroid was found
@@ -73,11 +71,9 @@ def goto_post(image):
     bmask = cv2.GaussianBlur(mask, (5, 5), 0)
     _, cntsfront, _ = cv2.findContours(bmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-
     centerb = 0
     areab = 0
     radiusb = 0
-
     if len(cntsback) >0:
         cntsb = max(cntsback, key=cv2.contourArea)
         ((xb,yb), radiusb) = cv2.minEnclosingCircle(cntsb)
@@ -86,7 +82,6 @@ def goto_post(image):
         areab = M["m00"]
     #   if not areab >'some value':  check the area for duble check
     #         centerb = 0, areab=0, radiusb=0
-
 
     centerf = 0
     areaf = 0
@@ -100,56 +95,39 @@ def goto_post(image):
         #   if not areab >'some value':  check the area for duble check
         #         centerf = 0, areaf=0, radiusf=0
 
-
-    # print centerf, centerb
-    # cv2.circle(image, centerf, 3, (255, 0, 0), 3)
-    # cv2.circle(image, centerb, 3, (255, 0, 0), 3)
-
-
-    ####### Bot position greater than Blind spot area
-    print centerb, POST_POINTS
     cv2.line(image, centerf, POST_POINTS, (0, 255, 0), 3)
     cv2.line(image, centerb, POST_POINTS, (0, 255, 0), 3)
     show_image(image)
-
     slopef = get_slope(centerf)
-    slopeb= get_slope(centerb)
-    print slopef, slopeb
-    if (slopef < 0 and slopeb <0 ) or (slopef >0 and slopeb >0):
-        slopeb = abs(slopeb)
-        slopef = abs(slopef)
-        angle_for_reference = angle_for_dj(centerb, centerf)
-        print 'angle for refernce', angle_for_reference
-        if angle_for_reference < 10 and angle_for_reference > -15:
-            print 'forward'
+    slopeb = get_slope(centerb)
+    if slopeb>0 and slopef>0:
+        if slopef > slopeb:
+            print 'left'
+        elif slopeb >slopef:
+            print 'right'
 
-        elif slopef > slopeb:
-            #         rotate to left until slopes in a range
-            # c.send('right')
+    elif slopef<0 and slopeb<0:
+        slopeb = 180+slopeb
+        slopef = 180+slopef
+        if slopef > slopeb:
             print 'right'
         elif slopeb > slopef:
-            #         rotate to right until slopes in a range
-            # c.send('left')
             print 'left'
-        #
-        # elif (abs(slopef - slopeb)) < 10:
-        #     if centerf[1] > centerb[1]:
-        #         # c.send() #rotate 180 for facing front to post and move forward
-        #         # c.send('right')
-        #         # time.sleep(2.2)
-        #         # c.send('forward')
-        #         print '180 and forward'
-        #     else:
-        #         # already focusing towards post
-        #         # c.send('forward')
-        #         print 'forward only'
-        else:
-            print "No condition satisfied RECHECK !!"
 
-    elif slopeb < 0 and slopef >0 :
-        print 'left'
-    elif slopef < 0 and slopeb >0 :
-        print 'right'
+    elif slopef <0 and slopeb>0:
+        slopef = 180+slopef
+        if slopeb < slopef:
+            print 'left'
+        elif slopef < slopeb:
+            print 'not expected condition please recheck 1'
+
+    elif slopeb <0 and slopef>0:
+        slopeob = 180+slopeb
+        if slopef <slopeb:
+            print 'right'
+        elif slopeb <slopef:
+            print 'not expected condition please recheck 2'
+
 
 if __name__ == "__main__":
 
@@ -158,4 +136,6 @@ if __name__ == "__main__":
         imgResp = urllib.urlopen(url)
         imgNp = np.array(bytearray(imgResp.read()), dtype=np.uint8)
         img = cv2.imdecode(imgNp, -1)
-        goto_post(img)
+        move_towardds_post(img)
+
+
