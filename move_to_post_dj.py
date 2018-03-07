@@ -5,24 +5,24 @@ from math import atan, degrees, atan2
 import urllib
 import socket
 # import cv2.cv as cv
-POST_POINTS = (1344, 626)  # should hard code before game
-CLOSE_TO_POST_UPPER = (810, 475)  # should hard code before game
-CLOSE_TO_POST_LOWER = (810, 685)  # should hard code before game
+POST_POINTS = (1356, 554)  # should hard code before game
+CLOSE_TO_POST_UPPER = (1166, 463)  # should hard code before game
+CLOSE_TO_POST_LOWER = (1169, 641)  # should hard code before game
 POST_RADIUS = 240
 
-# s = socket.socket()
+s = socket.socket()
 url = "http://10.7.170.27:8080/shot.jpg"
-# port = 12345
-# counter = 0
-# s.bind(("", port))
+port = 12345
+counter = 0
+s.bind(("", port))
 WINDOW_NAME = 'move to post'
-# print "socket binded to %s" % (port)
-# # # put the socket into listening mode
-# s.listen(5)
-# print "socket is listening"
-#
-# c, addr = s.accept()
-# print 'Got connection from', addr
+print "socket binded to %s" % (port)
+# # put the socket into listening mode
+s.listen(5)
+print "socket is listening"
+
+c, addr = s.accept()
+print 'Got connection from', addr
 
 def angle_for_dj(point1, point2):
     a0 = atan2(point2[1] - point1[1], point2[0] - point1[0])
@@ -112,7 +112,7 @@ def goto_post(image):
     print centerb, POST_POINTS
     cv2.line(image, centerf, POST_POINTS, (0, 255, 0), 3)
     cv2.line(image, centerb, POST_POINTS, (0, 255, 0), 3)
-    show_image(image)
+    # show_image(image)
     angle_for_reference = angle_for_dj(centerb, centerf)
     print 'angle for refernce', angle_for_reference
     if centerf[1] > CLOSE_TO_POST_UPPER[1] and centerf[0] > CLOSE_TO_POST_UPPER[0] and\
@@ -122,36 +122,53 @@ def goto_post(image):
         if angle_for_reference < 205 and angle_for_reference > 165 or\
            angle_for_reference > -205 and angle_for_reference < -165:
             print 'back'
+            c.send('back')
             time.sleep(1)
             print 'drop'
+            c.send('ball_drop')
         else:
             print 'right'
-    elif angle_for_reference < 10 and angle_for_reference > -10:
+            c.send('right')
+            c.send('stop')
+    elif angle_for_reference < 25 and angle_for_reference > -25:
         print 'forward'
+        c.send('forward')
+        time.sleep(1)
     elif centerf[1] < CLOSE_TO_POST_UPPER[1] and centerf[0] > CLOSE_TO_POST_UPPER[0]:
         if centerf[0] < centerb[0] + 10 and centerf[0] > centerb[0] - 10:
             print 'forward'
+            c.send('forward')
+            time.sleep(1)
         elif centerf[0] > centerb[0]:
             print 'right'
+            c.send('right')
         else:
             print 'left'
+            c.send('left')
     elif centerf[1] > CLOSE_TO_POST_LOWER[1] and centerf[0] > CLOSE_TO_POST_LOWER[0]:
         if centerf[0] < centerb[0] + 10 and centerf[0] > centerb[0] - 10:
             print 'forward'
+            c.send('forward')
+            time.sleep(1)
         elif centerf[0] >= centerb[0]:
             print 'left'
         else:
             print 'right'
+            c.send('right')
     elif centerf[1] >= POST_POINTS[1]:
         if centerf[0] >= centerb[0]:
             print 'left'
+            c.send('left')
         else:
             print 'right'
+            c.send('right')
     elif centerf[1] < POST_POINTS[1]:
         if centerf[0] > centerb[0]:
             print 'right'
+            c.send('right')
         else:
             print 'left'
+            c.send('left')
 
     # slopef = get_slope(centerf)
     # slopeb= get_slope(centerb)
