@@ -5,11 +5,11 @@ from math import atan, degrees, atan2
 import urllib
 import socket
 # import cv2.cv as cv
-POST_POINTS = (1356, 554)  # should hard code before game
-CLOSE_TO_POST_UPPER = (1166, 463)  # should hard code before game
-CLOSE_TO_POST_LOWER = (1169, 641)  # should hard code before game
+POST_POINTS = (1365, 619)  # should hard code before game
+CLOSE_TO_POST_UPPER = (1153, 484)  # should hard code before game
+CLOSE_TO_POST_LOWER = (1155, 751)  # should hard code before game
 POST_RADIUS = 240
-
+POST_FOUND = False
 s = socket.socket()
 url = "http://10.7.170.27:8080/shot.jpg"
 port = 12345
@@ -119,17 +119,20 @@ def goto_post(image):
        centerf[1] < CLOSE_TO_POST_LOWER[1] and centerf[0] > CLOSE_TO_POST_LOWER[0] and\
        centerb[1] > CLOSE_TO_POST_UPPER[1] and centerb[0] > CLOSE_TO_POST_UPPER[0] and\
        centerb[1] < CLOSE_TO_POST_LOWER[1] and centerb[0] > CLOSE_TO_POST_LOWER[0]:
-        if angle_for_reference < 205 and angle_for_reference > 165 or\
-           angle_for_reference > -205 and angle_for_reference < -165:
+        print 'Here...............................................'
+        if (angle_for_reference < 205 and angle_for_reference > 165 or\
+           angle_for_reference > -205 and angle_for_reference < -165) and not POST_FOUND:
             print 'back'
             c.send('back')
             time.sleep(1)
+            c.send('stop')
             print 'drop'
             c.send('ball_drop')
+            POST_FOUND = True
         else:
             print 'right'
             c.send('right')
-            time.sleep(0.4)
+            time.sleep(0.1)
             c.send('stop')
     elif angle_for_reference < 25 and angle_for_reference > -25:
         print 'forward'
@@ -143,12 +146,12 @@ def goto_post(image):
         elif centerf[0] > centerb[0]:
             print 'right'
             c.send('right')
-            time.sleep(0.4)
+            time.sleep(0.1)
             c.send('stop')
         else:
             print 'left'
             c.send('left')
-            time.sleep(0.4)
+            time.sleep(0.1)
             c.send('stop')
     elif centerf[1] > CLOSE_TO_POST_LOWER[1] and centerf[0] > CLOSE_TO_POST_LOWER[0]:
         if centerf[0] < centerb[0] + 10 and centerf[0] > centerb[0] - 10:
@@ -158,34 +161,34 @@ def goto_post(image):
         elif centerf[0] >= centerb[0]:
             print 'left'
             c.send('left')
-            time.sleep(0.4)
+            time.sleep(0.1)
             c.send('stop')
         else:
             print 'right'
             c.send('right')
-            time.sleep(0.4)
+            time.sleep(0.1)
             c.send('stop')
     elif centerf[1] >= POST_POINTS[1]:
         if centerf[0] >= centerb[0]:
             print 'left'
             c.send('left')
-            time.sleep(0.4)
+            time.sleep(0.1)
             c.send('stop')
         else:
             print 'right'
             c.send('right')
-            time.sleep(0.4)
+            time.sleep(0.1)
             c.send('stop')
     elif centerf[1] < POST_POINTS[1]:
         if centerf[0] > centerb[0]:
             print 'right'
             c.send('right')
-            time.sleep(0.4)
+            time.sleep(0.1)
             c.send('stop')
         else:
             print 'left'
             c.send('left')
-            time.sleep(0.4)
+            time.sleep(0.1)
             c.send('stop')
 
 
