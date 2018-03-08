@@ -34,7 +34,8 @@ def show_image(image):
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(WINDOW_NAME, 600, 600)
     cv2.imshow(WINDOW_NAME, image)
-    cv2.waitKey(0)
+    if cv2.waitKey(1) & 0xFF == 27:
+        pass
 
 def get_slope(point):
     slope = (POST_POINTS[1] - point[1]) / (POST_POINTS[0] - point[0])
@@ -49,6 +50,7 @@ def goto_post(image):
                 None if user hit ESC
     '''
 
+    global POST_FOUND
     image_x, image_y, color_code = image.shape
     # Blur the image to reduce noise
     blur = cv2.GaussianBlur(image, (5, 5), 0)
@@ -112,23 +114,24 @@ def goto_post(image):
     print centerb, POST_POINTS
     cv2.line(image, centerf, POST_POINTS, (0, 255, 0), 3)
     cv2.line(image, centerb, POST_POINTS, (0, 255, 0), 3)
-    # show_image(image)
+    show_image(image)
     angle_for_reference = angle_for_dj(centerb, centerf)
     print 'angle for refernce', angle_for_reference
     if centerf[1] > CLOSE_TO_POST_UPPER[1] and centerf[0] > CLOSE_TO_POST_UPPER[0] and\
        centerf[1] < CLOSE_TO_POST_LOWER[1] and centerf[0] > CLOSE_TO_POST_LOWER[0] and\
        centerb[1] > CLOSE_TO_POST_UPPER[1] and centerb[0] > CLOSE_TO_POST_UPPER[0] and\
-       centerb[1] < CLOSE_TO_POST_LOWER[1] and centerb[0] > CLOSE_TO_POST_LOWER[0]:
+       centerb[1] < CLOSE_TO_POST_LOWER[1] and centerb[0] > CLOSE_TO_POST_LOWER[0] or \
+       POST_FOUND:
+        POST_FOUND = True
         print 'Here...............................................'
         if (angle_for_reference < 205 and angle_for_reference > 165 or\
-           angle_for_reference > -205 and angle_for_reference < -165) and not POST_FOUND:
+           angle_for_reference > -205 and angle_for_reference < -165):
             print 'back'
             c.send('back')
-            time.sleep(1)
+            time.sleep(3)
             c.send('stop')
             print 'drop'
             c.send('ball_drop')
-            POST_FOUND = True
         else:
             print 'right'
             c.send('right')
@@ -139,7 +142,7 @@ def goto_post(image):
         c.send('forward')
         time.sleep(1)
     elif centerf[1] < CLOSE_TO_POST_UPPER[1] and centerf[0] > CLOSE_TO_POST_UPPER[0]:
-        if centerf[0] < centerb[0] + 10 and centerf[0] > centerb[0] - 10:
+        if centerf[0] < centerb[0] + 10 and centerf[0] > centerb[0] - 10 and centerf[1] > centerb[1]:
             print 'forward'
             c.send('forward')
             time.sleep(1)
@@ -154,7 +157,7 @@ def goto_post(image):
             time.sleep(0.1)
             c.send('stop')
     elif centerf[1] > CLOSE_TO_POST_LOWER[1] and centerf[0] > CLOSE_TO_POST_LOWER[0]:
-        if centerf[0] < centerb[0] + 10 and centerf[0] > centerb[0] - 10:
+        if centerf[0] < centerb[0] + 10 and centerf[0] > centerb[0] - 10 and centerf[1] < centerb[1]:
             print 'forward'
             c.send('forward')
             time.sleep(1)
