@@ -10,17 +10,15 @@ POST_RADIUS = 240
 
 # s = socket.socket()
 url = "http://10.7.170.27:8080/shot.jpg"
-# port = 12345
-# counter = 0
-# s.bind(("", port))
-WINDOW_NAME = 'move to post'
-# print "socket binded to %s" % (port)
-# # # put the socket into listening mode
-# s.listen(5)
-# print "socket is listening"
-#
-# c, addr = s.accept()
-# print 'Got connection from', addr
+WINDOW_NAME = 'post'
+port = 12345
+s = socket.socket()
+s.bind(("", port))
+s.listen(5)
+print "socket is listening"
+
+c, addr = s.accept()
+print 'Got connection from', addr
 
 def angle_for_dj(point1, point2):
     a0 = atan2(point2[1] - point1[1], point2[0] - point1[0])
@@ -32,7 +30,8 @@ def show_image(image):
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(WINDOW_NAME, 600, 600)
     cv2.imshow(WINDOW_NAME, image)
-    cv2.waitKey(0)
+    if cv2.waitKey(1) & 0xFF == 27:
+        pass
 
 def get_slope(point):
     slope = (POST_POINTS[0] - point[0]) / float((POST_POINTS[1] - point[1]))
@@ -108,21 +107,26 @@ def move_towardds_post(image):
     if slopeb>0 and slopef>0:
         if slopef > slopeb:
             print 'left'
+            c.send('left')
         elif slopeb >slopef:
             print 'right'
+            c.send('right')
 
     elif slopef<0 and slopeb<0:
         slopeb = 180+slopeb
         slopef = 180+slopef
         if slopef > slopeb:
-            print 'right'
-        elif slopeb > slopef:
             print 'left'
+            c.send('left')
+        elif slopeb > slopef:
+            print 'right'
+            c.send('right')
 
     elif slopef <0 and slopeb>0:
         slopef = 180+slopef
         if slopeb < slopef:
             print 'left'
+            c.send('left')
         elif slopef < slopeb:
             print 'not expected condition please recheck 1'
 
@@ -130,6 +134,7 @@ def move_towardds_post(image):
         slopeob = 180+slopeb
         if slopef <slopeb:
             print 'right'
+            c.send('right')
         elif slopeb <slopef:
             print 'not expected condition please recheck 2'
 
