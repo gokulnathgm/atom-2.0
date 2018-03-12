@@ -29,7 +29,7 @@ while True:
             bot.write("f")
         elif msg.startswith("drop"): 
             print 'Drop'
-                        bot.write("r")
+            bot.write("r")
             time.sleep(2.2)
             bot.write("b")
             time.sleep(2.5)
