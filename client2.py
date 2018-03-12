@@ -16,31 +16,40 @@ s.connect(("10.7.170.21", port))
  
 #receive data from the server
 while True:
-	msg = s.recv(64)
-	if len(msg):
-		if msg.startswith("left"):
-			print 'Left'
-			bot.write("l")
-		elif msg.startswith("right"):
-			print 'Right'
-			bot.write("r")
-		elif msg.startswith("forward"):
-			print 'Forward'
-			bot.write("f")
-		elif msg.startswith("drop"): 
-			print 'Drop'
+    msg = s.recv(64)
+    if len(msg):
+        if msg.startswith("left"):
+            print 'Left'
+            bot.write("l")
+        elif msg.startswith("right"):
+            print 'Right'
+            bot.write("r")
+        elif msg.startswith("forward"):
+            print 'Forward'
+            bot.write("f")
+        elif msg.startswith("drop"): 
+            print 'Drop'
                         bot.write("r")
-			time.sleep(2.2)
-			bot.write("b")
-			time.sleep(2.5)
-			bot.write("d")
-		elif msg.startswith("initial"):
-			print "Initial"
-			bot.write("f")
-			time.sleep(4)
-			bot.write("b")
-			time.sleep(6)
-			bot.write("s")
-			bot.write("d")
+            time.sleep(2.2)
+            bot.write("b")
+            time.sleep(2.5)
+            bot.write("d")
+        elif msg.startswith("initial"):
+            print "Initial"
+            bot.write("f")
+            time.sleep(4)
+            bot.write("b")
+            time.sleep(6)
+            bot.write("s")
+            bot.write("d")
+        elif msg.startswith("back"):
+            print "back"
+            bot.write("b")
+        elif msg.startswith("ball_drop"):
+            print "drop"
+            bot.write("d")
+        elif msg.startswith("stop"):
+            print "stop"
+            bot.write("s")
 # close the connection
 s.close()   

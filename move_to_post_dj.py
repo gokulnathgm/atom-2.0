@@ -24,6 +24,7 @@ print "socket is listening"
 c, addr = s.accept()
 print 'Got connection from', addr
 
+
 def angle_for_dj(point1, point2):
     a0 = atan2(point2[1] - point1[1], point2[0] - point1[0])
     a1 = atan2(POST_POINTS[1] - point1[1], POST_POINTS[0] - point1[0])
@@ -37,11 +38,12 @@ def show_image(image):
     if cv2.waitKey(1) & 0xFF == 27:
         pass
 
+
 def get_slope(point):
-    slope = (POST_POINTS[1] - point[1]) / (POST_POINTS[0] - point[0])
-    x = (POST_POINTS[1] - point[1])
-    y = (POST_POINTS[0] - point[0])
-    return  degrees(atan2(y,x))
+    slope = (POST_POINTS[0] - point[0]) / float((POST_POINTS[1] - point[1]))
+    print slope
+    return degrees(atan(slope))
+
 
 def goto_post(image):
     '''Accepts BGR image as Numpy array
@@ -57,7 +59,7 @@ def goto_post(image):
     # Convert BGR to HSV
     hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
-    #hsv for color pink
+    # hsv for color pink
     lower_front = np.array([141, 60, 171])
     upper_front = np.array([183, 183, 230])
 
@@ -71,7 +73,6 @@ def goto_post(image):
     bmask = cv2.GaussianBlur(mask, (5, 5), 0)
     _, cntsback, _ = cv2.findContours(bmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-
     mask = cv2.inRange(hsv, lower_front, upper_front)
     # Blur the mask
     bmask = cv2.GaussianBlur(mask, (5, 5), 0)
@@ -82,9 +83,9 @@ def goto_post(image):
     areab = 0
     radiusb = 0
 
-    if len(cntsback) >0:
+    if len(cntsback) > 0:
         cntsb = max(cntsback, key=cv2.contourArea)
-        ((xb,yb), radiusb) = cv2.minEnclosingCircle(cntsb)
+        ((xb, yb), radiusb) = cv2.minEnclosingCircle(cntsb)
         M = cv2.moments(cntsb)
         centerb = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
         areab = M["m00"]
@@ -95,7 +96,7 @@ def goto_post(image):
     centerf = 0
     areaf = 0
     radiusf = 0
-    if len(cntsfront) >0:
+    if len(cntsfront) > 0:
         cntsf = max(cntsfront, key=cv2.contourArea)
         ((xb, yb), radiusf) = cv2.minEnclosingCircle(cntsf)
         M = cv2.moments(cntsf)
@@ -104,13 +105,13 @@ def goto_post(image):
         #   if not areab >'some value':  check the area for duble check
         #         centerf = 0, areaf=0, radiusf=0
 
-
     # print centerf, centerb
     # cv2.circle(image, centerf, 3, (255, 0, 0), 3)
     # cv2.circle(image, centerb, 3, (255, 0, 0), 3)
 
-
-    ####### Bot position greater than Blind spot area
+    slopef = get_slope(centerf)
+    slopeb = get_slope(centerb)
+    # ########### Bot position greater than Blind spot area
     print centerb, POST_POINTS
     cv2.line(image, centerf, POST_POINTS, (0, 255, 0), 3)
     cv2.line(image, centerb, POST_POINTS, (0, 255, 0), 3)
@@ -123,8 +124,7 @@ def goto_post(image):
        centerb[1] < CLOSE_TO_POST_LOWER[1] and centerb[0] > CLOSE_TO_POST_LOWER[0] or \
        POST_FOUND:
         POST_FOUND = True
-        print 'Here...............................................'
-        if (angle_for_reference < 205 and angle_for_reference > 165 or\
+        if (angle_for_reference < 205 and angle_for_reference > 165 or
            angle_for_reference > -205 and angle_for_reference < -165):
             print 'back'
             c.send('back')
@@ -171,28 +171,51 @@ def goto_post(image):
             c.send('right')
             time.sleep(0.1)
             c.send('stop')
-    elif centerf[1] >= POST_POINTS[1]:
-        if centerf[0] >= centerb[0]:
+    if slopeb > 0 and slopef > 0:
+        if slopef > slopeb:
             print 'left'
             c.send('left')
             time.sleep(0.1)
             c.send('stop')
-        else:
+        elif slopeb > slopef:
             print 'right'
             c.send('right')
             time.sleep(0.1)
             c.send('stop')
-    elif centerf[1] < POST_POINTS[1]:
-        if centerf[0] > centerb[0]:
-            print 'right'
-            c.send('right')
-            time.sleep(0.1)
-            c.send('stop')
-        else:
+
+    elif slopef < 0 and slopeb < 0:
+        slopeb = 180 + slopeb
+        slopef = 180 + slopef
+        if slopef > slopeb:
             print 'left'
             c.send('left')
             time.sleep(0.1)
             c.send('stop')
+        elif slopeb > slopef:
+            print 'right'
+            c.send('right')
+            time.sleep(0.1)
+            c.send('stop')
+
+    elif slopef < 0 and slopeb > 0:
+        slopef = 180 + slopef
+        if slopeb < slopef:
+            print 'left'
+            c.send('left')
+            time.sleep(0.1)
+            c.send('stop')
+        elif slopef < slopeb:
+            print 'not expected condition please recheck 1'
+
+    elif slopeb < 0 and slopef > 0:
+        slopeb = 180 + slopeb
+        if slopef < slopeb:
+            print 'right'
+            c.send('right')
+            time.sleep(0.1)
+            c.send('stop')
+        elif slopeb < slopef:
+            print 'not expected condition please recheck 2'
 
 
 if __name__ == "__main__":
