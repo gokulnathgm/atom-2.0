@@ -132,11 +132,52 @@ def goto_post(image):
             c.send('stop')
             print 'drop'
             c.send('ball_drop')
-        else:
-            print 'right'
-            c.send('right')
-            time.sleep(0.1)
-            c.send('stop')
+        elif slopeb > 0 and slopef > 0:
+            if slopef > slopeb:
+                print 'left'
+                c.send('left')
+                time.sleep(0.1)
+                c.send('stop')
+            elif slopeb > slopef:
+                print 'left'
+                c.send('left')
+                time.sleep(0.1)
+                c.send('stop')
+
+        elif slopef < 0 and slopeb < 0:
+            slopeb = 180 + slopeb
+            slopef = 180 + slopef
+            if slopef > slopeb:
+                print 'left'
+                c.send('left')
+                time.sleep(0.1)
+                c.send('stop')
+            elif slopeb > slopef:
+                print 'left'
+                c.send('left')
+                time.sleep(0.1)
+                c.send('stop')
+
+        elif slopef < 0 and slopeb > 0:
+            slopef = 180 + slopef
+            if slopeb < slopef:
+                print 'left'
+                c.send('left')
+                time.sleep(0.1)
+                c.send('stop')
+            elif slopef < slopeb:
+                print 'not expected condition please recheck 1'
+
+        elif slopeb < 0 and slopef > 0:
+            slopeb = 180 + slopeb
+            if slopef < slopeb:
+                print 'left'
+                c.send('left')
+                time.sleep(0.1)
+                c.send('stop')
+            elif slopeb < slopef:
+                print 'not expected condition please recheck 2'
+
     elif angle_for_reference < 25 and angle_for_reference > -25:
         print 'forward'
         c.send('forward')
@@ -171,7 +212,7 @@ def goto_post(image):
             c.send('right')
             time.sleep(0.1)
             c.send('stop')
-    if slopeb > 0 and slopef > 0:
+    elif slopeb > 0 and slopef > 0:
         if slopef > slopeb:
             print 'left'
             c.send('left')
