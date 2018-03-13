@@ -5,9 +5,9 @@ from math import atan, degrees, atan2
 import urllib
 import socket
 # import cv2.cv as cv
-POST_POINTS = (1365, 619)  # should hard code before game
-CLOSE_TO_POST_UPPER = (1153, 484)  # should hard code before game
-CLOSE_TO_POST_LOWER = (1155, 751)  # should hard code before game
+POST_POINTS = (1324, 621)  # should hard code before game
+CLOSE_TO_POST_UPPER = (1145, 524)  # should hard code before game
+CLOSE_TO_POST_LOWER = (1139, 704)  # should hard code before game
 POST_RADIUS = 240
 POST_FOUND = False
 s = socket.socket()
@@ -40,7 +40,11 @@ def show_image(image):
 
 
 def get_slope(point):
-    slope = (POST_POINTS[0] - point[0]) / float((POST_POINTS[1] - point[1]))
+    print POST_POINTS, point
+    try:
+        slope = (POST_POINTS[0] - point[0]) / float((POST_POINTS[1] - point[1]))
+    except:
+        return 90
     print slope
     return degrees(atan(slope))
 
@@ -134,8 +138,8 @@ def goto_post(image):
             c.send('ball_drop')
         elif slopeb > 0 and slopef > 0:
             if slopef > slopeb:
-                print 'left'
-                c.send('left')
+                print 'right'
+                c.send('right')
                 time.sleep(0.1)
                 c.send('stop')
             elif slopeb > slopef:
@@ -148,8 +152,8 @@ def goto_post(image):
             slopeb = 180 + slopeb
             slopef = 180 + slopef
             if slopef > slopeb:
-                print 'left'
-                c.send('left')
+                print 'right'
+                c.send('right')
                 time.sleep(0.1)
                 c.send('stop')
             elif slopeb > slopef:
@@ -161,8 +165,8 @@ def goto_post(image):
         elif slopef < 0 and slopeb > 0:
             slopef = 180 + slopef
             if slopeb < slopef:
-                print 'left'
-                c.send('left')
+                print 'right'
+                c.send('right')
                 time.sleep(0.1)
                 c.send('stop')
             elif slopef < slopeb:
@@ -177,6 +181,7 @@ def goto_post(image):
                 c.send('stop')
             elif slopeb < slopef:
                 print 'not expected condition please recheck 2'
+        
 
     elif angle_for_reference < 25 and angle_for_reference > -25:
         print 'forward'
