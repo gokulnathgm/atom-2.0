@@ -5,8 +5,8 @@ from math import sqrt, acos, pi, degrees, atan
 import urllib
 import socket
 
-POST_POINT = (1343, 604)
-MEET_POINT = (974, 631)
+POST_POINT = (1809, 569)
+MEET_POINT = (1481, 582)
 center_front = ()
 
 url = "http://10.7.170.27:8080/shot.jpg"
@@ -24,34 +24,34 @@ print 'Got connection from', addr
 
 def get_direction(slopef, slopeb):
     if slopeb == slopef:
-            return "Condition not handled yet"
-        if slopeb > 0 and slopef > 0:
-            if slopef > slopeb:
-                return 'left'
-            elif slopeb > slopef:
-                return 'right'
+        return "Condition not handled yet"
+    if slopeb > 0 and slopef > 0:
+        if slopef > slopeb:
+            return 'left'
+        elif slopeb > slopef:
+            return 'right'
 
-        elif slopef < 0 and slopeb < 0:
-            slopeb = 180 + slopeb
-            slopef = 180 + slopef
-            if slopef > slopeb:
-                return 'left'
-            elif slopeb > slopef:
-                return 'right'
+    elif slopef < 0 and slopeb < 0:
+        slopeb = 180 + slopeb
+        slopef = 180 + slopef
+        if slopef > slopeb:
+            return 'left'
+        elif slopeb > slopef:
+            return 'right'
 
-        elif slopef < 0 and slopeb > 0:
-            slopef = 180 + slopef
-            if slopeb < slopef:
-                return 'left'
-            elif slopef < slopeb:
-                return 'error: not expected condition please recheck 1'
+    elif slopef < 0 and slopeb > 0:
+        slopef = 180 + slopef
+        if slopeb < slopef:
+            return 'left'
+        elif slopef < slopeb:
+            return 'error: not expected condition please recheck 1'
 
-        elif slopeb < 0 and slopef > 0:
-            slopeob = 180 + slopeb
-            if slopef < slopeb:
-                return 'right'
-            elif slopeb < slopef:
-                return 'error: not expected condition please recheck 2'
+    elif slopeb < 0 and slopef > 0:
+        slopeob = 180 + slopeb
+        if slopef < slopeb:
+            return 'right'
+        elif slopeb < slopef:
+            return 'error: not expected condition please recheck 2'
 
 
 def get_slope(point):
