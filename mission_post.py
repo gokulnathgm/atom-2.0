@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import time
-from math import sqrt, acos, pi
+from math import sqrt, acos, pi, degrees, atan
 import urllib
 import socket
 
@@ -20,6 +20,43 @@ print "socket is listening"
 
 c, addr = s.accept()
 print 'Got connection from', addr
+
+
+def get_direction(slopef, slopeb):
+    if slopeb == slopef:
+            return "Condition not handled yet"
+        if slopeb > 0 and slopef > 0:
+            if slopef > slopeb:
+                return 'left'
+            elif slopeb > slopef:
+                return 'right'
+
+        elif slopef < 0 and slopeb < 0:
+            slopeb = 180 + slopeb
+            slopef = 180 + slopef
+            if slopef > slopeb:
+                return 'left'
+            elif slopeb > slopef:
+                return 'right'
+
+        elif slopef < 0 and slopeb > 0:
+            slopef = 180 + slopef
+            if slopeb < slopef:
+                return 'left'
+            elif slopef < slopeb:
+                return 'error: not expected condition please recheck 1'
+
+        elif slopeb < 0 and slopef > 0:
+            slopeob = 180 + slopeb
+            if slopef < slopeb:
+                return 'right'
+            elif slopeb < slopef:
+                return 'error: not expected condition please recheck 2'
+
+
+def get_slope(point):
+    slope = (POST_POINT[0] - point[0]) / float((POST_POINT[1] - point[1]))
+    return  degrees(atan(slope))
 
 
 def show_image(image):
@@ -101,9 +138,10 @@ def goto_target_point(image, target_point):
         #   if not area_back >'some value':  check the area for double check
         #   center_front = 0, area_front=0, radius_front=0
 
-    # check if bot is in the other half of the MEET_POINT wrt the post
     cv2.circle(image, MEET_POINT, 3, (255, 0, 0), 3)
     show_image(image)
+
+    # check if bot is in the other half of the MEET_POINT wrt the post
     if center_front[0] < target_point[0] and center_back[0] < target_point[0]:
         print 'Upper Half!'
         angle = three_point_angle(center_back, center_front, target_point)
@@ -112,8 +150,9 @@ def goto_target_point(image, target_point):
             print 'Move straight to meet point...'
             return 'forward'
         else:
-            print 'Turn to find a suitable angle...'
-            return 'right'
+            slope_front = get_slope(center_front)
+            slope_back = get_slope(center_back)
+            return get_direction(slope_front, slope_back)
 
     if center_front[0] > target_point[0] and center_back[0] > target_point[0]:
         print 'Lower Half!'
@@ -123,8 +162,9 @@ def goto_target_point(image, target_point):
             print 'Move straight to meet point...'
             return 'forward'
         else:
-            print 'Turn to find a suitable angle...'
-            return 'right'
+            slope_front = get_slope(center_front)
+            slope_back = get_slope(center_back)
+            return get_direction(slope_front, slope_back)
     else:
         print 'Middle region'
         angle = three_point_angle(center_back, center_front, target_point)
@@ -135,8 +175,9 @@ def goto_target_point(image, target_point):
                 print 'Move straight to meet point...'
                 return 'forward'
             else:
-                print 'Turn to find a suitable angle...'
-                return 'right'
+                slope_front = get_slope(center_front)
+                slope_back = get_slope(center_back)
+                return get_direction(slope_front, slope_back)
 
 
 if __name__ == "__main__":
@@ -148,7 +189,7 @@ if __name__ == "__main__":
         img = cv2.imdecode(imgNp, -1)
         direction = goto_target_point(img, MEET_POINT)
         c.send(direction)
-        if direction == 'right':
+        if direction != 'forward':
             time.sleep(0.15)
             c.send('stop')
 
