@@ -5,7 +5,7 @@ from math import atan, degrees, atan2
 import urllib
 import socket
 # import cv2.cv as cv
-POST_POINTS = (1369,558) #should hard code before game
+POST_POINTS = (1324, 621) #should hard code before game
 POST_RADIUS = 240
 
 # s = socket.socket()
@@ -101,7 +101,7 @@ def move_towardds_post(image):
 
     slopef = get_slope(centerf)
     slopeb = get_slope(centerb)
-    print slopef, slopeb
+    print "slopeF " + str(slopef), "slopeB " + str(slopeb)
     if slopeb == slopef:
         print "Condition not handled yet"
     if slopeb>0 and slopef>0:

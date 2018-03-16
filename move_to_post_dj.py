@@ -41,7 +41,11 @@ def show_image(image):
 
 
 def get_slope(point):
-    slope = (POST_POINTS_FRONT[0] - point[0]) / float((POST_POINTS_FRONT[1] - point[1]))
+    print POST_POINTS, point
+    try:
+        slope = (POST_POINTS_FRONT[0] - point[0]) / float((POST_POINTS_FRONT[1] - point[1]))
+    except:
+        return 90
     print slope
     return degrees(atan(slope))
 
@@ -49,27 +53,27 @@ def get_slope(point):
 def get_direction(slopeb, slopef, reversed=False):
     if slopeb > 0 and slopef > 0:
         if slopef > slopeb:
-            direction = 'left'
-        elif slopeb > slopef:
             direction = 'right'
+        elif slopeb > slopef:
+            direction = 'left'
     elif slopef < 0 and slopeb < 0:
         slopeb = 180 + slopeb
         slopef = 180 + slopef
         if slopef > slopeb:
-            direction = 'left'
-        elif slopeb > slopef:
             direction = 'right'
+        elif slopeb > slopef:
+            direction = 'left'
     elif slopef < 0 and slopeb > 0:
         slopef = 180 + slopef
         if slopeb < slopef:
-            direction = 'left'
+            direction = 'right'
         elif slopef < slopeb:
             direction = 'not expected condition please recheck 1'
 
     elif slopeb < 0 and slopef > 0:
         slopeb = 180 + slopeb
         if slopef < slopeb:
-            direction = 'right'
+            direction = 'left'
         elif slopeb < slopef:
             direction = 'not expected condition please recheck 2'
     if reversed:
