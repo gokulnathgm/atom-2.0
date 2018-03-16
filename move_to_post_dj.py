@@ -5,7 +5,8 @@ from math import atan, degrees, atan2
 import urllib
 import socket
 # import cv2.cv as cv
-POST_POINTS = (1365, 619)  # should hard code before game
+POST_POINTS_FRONT = (1265, 619)  # should hard code before game
+POST_POINTS_BACK = (1465, 619)  # should hard code before game
 CLOSE_TO_POST_UPPER = (1153, 484)  # should hard code before game
 CLOSE_TO_POST_LOWER = (1155, 751)  # should hard code before game
 POST_RADIUS = 240
@@ -25,9 +26,9 @@ c, addr = s.accept()
 print 'Got connection from', addr
 
 
-def angle_for_dj(point1, point2):
+def angle_for_dj(point1, point2, post_point):
     a0 = atan2(point2[1] - point1[1], point2[0] - point1[0])
-    a1 = atan2(POST_POINTS[1] - point1[1], POST_POINTS[0] - point1[0])
+    a1 = atan2(post_point[1] - point1[1], post_point[0] - point1[0])
     return degrees(a1 - a0)
 
 
@@ -40,9 +41,43 @@ def show_image(image):
 
 
 def get_slope(point):
-    slope = (POST_POINTS[0] - point[0]) / float((POST_POINTS[1] - point[1]))
+    slope = (POST_POINTS_FRONT[0] - point[0]) / float((POST_POINTS_FRONT[1] - point[1]))
     print slope
     return degrees(atan(slope))
+
+
+def get_direction(slopeb, slopef, reversed=False):
+    if slopeb > 0 and slopef > 0:
+        if slopef > slopeb:
+            direction = 'left'
+        elif slopeb > slopef:
+            direction = 'right'
+    elif slopef < 0 and slopeb < 0:
+        slopeb = 180 + slopeb
+        slopef = 180 + slopef
+        if slopef > slopeb:
+            direction = 'left'
+        elif slopeb > slopef:
+            direction = 'right'
+    elif slopef < 0 and slopeb > 0:
+        slopef = 180 + slopef
+        if slopeb < slopef:
+            direction = 'left'
+        elif slopef < slopeb:
+            direction = 'not expected condition please recheck 1'
+
+    elif slopeb < 0 and slopef > 0:
+        slopeb = 180 + slopeb
+        if slopef < slopeb:
+            direction = 'right'
+        elif slopeb < slopef:
+            direction = 'not expected condition please recheck 2'
+    if reversed:
+        if direction == 'right':
+            direction = 'left'
+        else:
+            direction = 'right'
+    return direction
 
 
 def goto_post(image):
@@ -112,11 +147,12 @@ def goto_post(image):
     slopef = get_slope(centerf)
     slopeb = get_slope(centerb)
     # ########### Bot position greater than Blind spot area
-    print centerb, POST_POINTS
-    cv2.line(image, centerf, POST_POINTS, (0, 255, 0), 3)
-    cv2.line(image, centerb, POST_POINTS, (0, 255, 0), 3)
+    print centerb, POST_POINTS_FRONT
+    cv2.line(image, centerf, POST_POINTS_FRONT, (0, 255, 0), 3)
+    cv2.line(image, centerb, POST_POINTS_FRONT, (0, 255, 0), 3)
     show_image(image)
-    angle_for_reference = angle_for_dj(centerb, centerf)
+    angle_for_reference = angle_for_dj(centerb, centerf, POST_POINTS_FRONT)
+    angle_for_post = angle_for_dj(centerb, centerf, POST_POINTS_BACK)
     print 'angle for refernce', angle_for_reference
     if centerf[1] > CLOSE_TO_POST_UPPER[1] and centerf[0] > CLOSE_TO_POST_UPPER[0] and\
        centerf[1] < CLOSE_TO_POST_LOWER[1] and centerf[0] > CLOSE_TO_POST_LOWER[0] and\
@@ -124,139 +160,31 @@ def goto_post(image):
        centerb[1] < CLOSE_TO_POST_LOWER[1] and centerb[0] > CLOSE_TO_POST_LOWER[0] or \
        POST_FOUND:
         POST_FOUND = True
-        if (angle_for_reference < 205 and angle_for_reference > 165 or
-           angle_for_reference > -205 and angle_for_reference < -165):
+        if (angle_for_post < 205 and angle_for_post > 165 or
+           angle_for_post > -205 and angle_for_post < -165):
             print 'back'
             c.send('back')
             time.sleep(3)
             c.send('stop')
             print 'drop'
             c.send('ball_drop')
-        elif slopeb > 0 and slopef > 0:
-            if slopef > slopeb:
-                print 'left'
-                c.send('left')
-                time.sleep(0.1)
-                c.send('stop')
-            elif slopeb > slopef:
-                print 'left'
-                c.send('left')
-                time.sleep(0.1)
-                c.send('stop')
-
-        elif slopef < 0 and slopeb < 0:
-            slopeb = 180 + slopeb
-            slopef = 180 + slopef
-            if slopef > slopeb:
-                print 'left'
-                c.send('left')
-                time.sleep(0.1)
-                c.send('stop')
-            elif slopeb > slopef:
-                print 'left'
-                c.send('left')
-                time.sleep(0.1)
-                c.send('stop')
-
-        elif slopef < 0 and slopeb > 0:
-            slopef = 180 + slopef
-            if slopeb < slopef:
-                print 'left'
-                c.send('left')
-                time.sleep(0.1)
-                c.send('stop')
-            elif slopef < slopeb:
-                print 'not expected condition please recheck 1'
-
-        elif slopeb < 0 and slopef > 0:
-            slopeb = 180 + slopeb
-            if slopef < slopeb:
-                print 'left'
-                c.send('left')
-                time.sleep(0.1)
-                c.send('stop')
-            elif slopeb < slopef:
-                print 'not expected condition please recheck 2'
+        else:
+            direction = get_direction(slopeb, slopef, True)
+            print direction
+            c.send(direction)
+            time.sleep(0.1)
+            c.send('stop')
 
     elif angle_for_reference < 25 and angle_for_reference > -25:
         print 'forward'
         c.send('forward')
         time.sleep(1)
-    elif centerf[1] < CLOSE_TO_POST_UPPER[1] and centerf[0] > CLOSE_TO_POST_UPPER[0]:
-        if centerf[0] < centerb[0] + 10 and centerf[0] > centerb[0] - 10 and centerf[1] > centerb[1]:
-            print 'forward'
-            c.send('forward')
-            time.sleep(1)
-        elif centerf[0] > centerb[0]:
-            print 'right'
-            c.send('right')
-            time.sleep(0.1)
-            c.send('stop')
-        else:
-            print 'left'
-            c.send('left')
-            time.sleep(0.1)
-            c.send('stop')
-    elif centerf[1] > CLOSE_TO_POST_LOWER[1] and centerf[0] > CLOSE_TO_POST_LOWER[0]:
-        if centerf[0] < centerb[0] + 10 and centerf[0] > centerb[0] - 10 and centerf[1] < centerb[1]:
-            print 'forward'
-            c.send('forward')
-            time.sleep(1)
-        elif centerf[0] >= centerb[0]:
-            print 'left'
-            c.send('left')
-            time.sleep(0.1)
-            c.send('stop')
-        else:
-            print 'right'
-            c.send('right')
-            time.sleep(0.1)
-            c.send('stop')
-    elif slopeb > 0 and slopef > 0:
-        if slopef > slopeb:
-            print 'left'
-            c.send('left')
-            time.sleep(0.1)
-            c.send('stop')
-        elif slopeb > slopef:
-            print 'right'
-            c.send('right')
-            time.sleep(0.1)
-            c.send('stop')
-
-    elif slopef < 0 and slopeb < 0:
-        slopeb = 180 + slopeb
-        slopef = 180 + slopef
-        if slopef > slopeb:
-            print 'left'
-            c.send('left')
-            time.sleep(0.1)
-            c.send('stop')
-        elif slopeb > slopef:
-            print 'right'
-            c.send('right')
-            time.sleep(0.1)
-            c.send('stop')
-
-    elif slopef < 0 and slopeb > 0:
-        slopef = 180 + slopef
-        if slopeb < slopef:
-            print 'left'
-            c.send('left')
-            time.sleep(0.1)
-            c.send('stop')
-        elif slopef < slopeb:
-            print 'not expected condition please recheck 1'
-
-    elif slopeb < 0 and slopef > 0:
-        slopeb = 180 + slopeb
-        if slopef < slopeb:
-            print 'right'
-            c.send('right')
-            time.sleep(0.1)
-            c.send('stop')
-        elif slopeb < slopef:
-            print 'not expected condition please recheck 2'
+    else:
+        direction = get_direction(slopeb, slopef)
+        print direction
+        c.send(direction)
+        time.sleep(0.1)
+        c.send('stop')
 
 
 if __name__ == "__main__":
