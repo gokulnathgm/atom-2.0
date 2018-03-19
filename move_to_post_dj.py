@@ -41,7 +41,7 @@ def show_image(image):
 
 
 def get_slope(point):
-    print POST_POINTS, point
+    print point
     try:
         slope = (POST_POINTS_FRONT[0] - point[0]) / float((POST_POINTS_FRONT[1] - point[1]))
     except:
