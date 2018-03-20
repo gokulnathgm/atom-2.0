@@ -5,9 +5,13 @@ from math import sqrt, acos, pi, degrees, atan
 import urllib
 import socket
 
-POST_POINT = (1809, 569)
-MEET_POINT = (1481, 582)
-center_front = ()
+POST_POINT = (1395, 494)
+MEET_POINT = (1093, 517)
+POST_EDGE1 = (1387, 401)
+POST_EDGE2 = (1389, 626)
+CORNER_POINT1 = (1201, 118)
+CORNER_POINT2 = (1217, 931)
+center_front, center_back = (), ()
 
 url = "http://10.7.170.27:8080/shot.jpg"
 WINDOW_NAME = 'Aerial View'
@@ -23,6 +27,8 @@ print 'Got connection from', addr
 
 
 def get_direction(slopef, slopeb):
+    print 'slopef: ', slopef
+    print 'slopeb: ', slopeb
     if slopeb == slopef:
         return "Condition not handled yet"
     if slopeb > 0 and slopef > 0:
@@ -47,9 +53,42 @@ def get_direction(slopef, slopeb):
             return 'error: not expected condition please recheck 1'
 
     elif slopeb < 0 and slopef > 0:
-        slopeob = 180 + slopeb
+        slopeb = 180 + slopeb
         if slopef < slopeb:
             return 'right'
+        elif slopeb < slopef:
+            return 'error: not expected condition please recheck 2'
+
+def get_direction_lower(slopef, slopeb):
+    print 'slopef: ', slopef
+    print 'slopeb: ', slopeb
+    if slopeb == slopef:
+        return "Condition not handled yet"
+    if slopeb > 0 and slopef > 0:
+        if slopef > slopeb:
+            return 'right'
+        elif slopeb > slopef:
+            return 'left'
+
+    elif slopef < 0 and slopeb < 0:
+        slopeb = 180 + slopeb
+        slopef = 180 + slopef
+        if slopef > slopeb:
+            return 'right'
+        elif slopeb > slopef:
+            return 'left'
+
+    elif slopef < 0 and slopeb > 0:
+        slopef = 180 + slopef
+        if slopeb < slopef:
+            return 'right'
+        elif slopef < slopeb:
+            return 'error: not expected condition please recheck 1'
+
+    elif slopeb < 0 and slopef > 0:
+        slopeb = 180 + slopeb
+        if slopef < slopeb:
+            return 'left'
         elif slopeb < slopef:
             return 'error: not expected condition please recheck 2'
 
@@ -75,11 +114,11 @@ def three_point_angle(p0, p1, p2):
 
 
 def two_point_distance(p0, p1):
-    return sqrt(((p0[0] - p1[0]) ** 2) + ((p0[0] - p1[1]) ** 2))
+    return sqrt(((p0[0] - p1[0]) ** 2) + ((p0[1] - p1[1]) ** 2))
 
 
 def goto_target_point(image, target_point):
-    global center_front
+    global center_front, center_back
 
     image_x, image_y, color_code = image.shape
     # Blur the image to reduce noise
@@ -146,7 +185,7 @@ def goto_target_point(image, target_point):
         print 'Upper Half!'
         angle = three_point_angle(center_back, center_front, target_point)
         print 'Angle: ', angle
-        if (angle >= 170 and angle <= 180) and (center_front[0] > center_back[0]):
+        if (angle >= 165 and angle <= 180) and (center_front[0] > center_back[0]):
             print 'Move straight to meet point...'
             return 'forward'
         else:
@@ -156,49 +195,76 @@ def goto_target_point(image, target_point):
 
     if center_front[0] > target_point[0] and center_back[0] > target_point[0]:
         print 'Lower Half!'
-        angle = three_point_angle(center_back, center_front, target_point)
+        CORNER_POINT = CORNER_POINT2 if center_front[1] < POST_POINT[1] else CORNER_POINT1
+        angle = three_point_angle(center_back, center_front, CORNER_POINT)
         print 'Angle: ', angle
-        if (angle >= 170 and angle <= 180) and (center_front[0] < center_back[0]):
-            print 'Move straight to meet point...'
-            return 'forward'
+        if (angle >= 165 and angle <= 180):
+            if (center_front[1] < POST_POINT[1] and center_front[1] > center_back[1]) or (center_front[1] > POST_POINT[1] and center_front[1] < center_back[1]):
+                print 'Move straight to meet point...'
+                return 'forward_down'
+            else:
+                return 'right'
         else:
-            slope_front = get_slope(center_front)
-            slope_back = get_slope(center_back)
-            return get_direction(slope_front, slope_back)
+            # slope_front = get_slope(center_front)
+            # slope_back = get_slope(center_back)
+            # return get_direction_lower(slope_front, slope_back)
+            return 'right'
     else:
         print 'Middle region'
         angle = three_point_angle(center_back, center_front, target_point)
         print 'Angle: ', angle
-        if angle >= 175 and angle <= 180:
+        if angle >= 165 and angle <= 180:
             if (center_back[1] > center_front[1] > target_point[1]) or (
                     center_back[1] > center_front[1] > target_point[1]):
                 print 'Move straight to meet point...'
                 return 'forward'
-            else:
-                slope_front = get_slope(center_front)
-                slope_back = get_slope(center_back)
-                return get_direction(slope_front, slope_back)
+        slope_front = get_slope(center_front)
+        slope_back = get_slope(center_back)
+        return get_direction(slope_front, slope_back)
+
 
 
 if __name__ == "__main__":
 
     while True:
+        lower = False
         # image = cv2.imread("/home/qburst/robot/entethala.jpg")
         imgResp = urllib.urlopen(url)
         imgNp = np.array(bytearray(imgResp.read()), dtype=np.uint8)
         img = cv2.imdecode(imgNp, -1)
         direction = goto_target_point(img, MEET_POINT)
+        pos = 'bottom' if center_front[1] > POST_POINT[1] else 'top'
+        if direction.endswith('_down'):
+            lower = True
+            direction = direction.replace('_down', '')
+        print 'direction: ', direction
         c.send(direction)
         if direction != 'forward':
             time.sleep(0.15)
             c.send('stop')
-
+        distance_bot_meet = two_point_distance(MEET_POINT, center_front)
+        print 'distance_bot_target: ', distance_bot_meet
+        if distance_bot_meet <= 80:
+            c.send('stop')
+            time.sleep(20)
         if direction == 'forward':
+            print 'center_front', center_front[1]
+            if lower:
+                if pos == 'top':
+                    if center_front[1] > POST_POINT[1]:
+                        c.send('stop')
+                        break
+                else:
+                    if center_front[1] < POST_POINT[1]:
+                        c.send('stop')
+                        break
+
             distance_bot_meet = two_point_distance(MEET_POINT, center_front)
             print 'distance_bot_target: ', distance_bot_meet
-            if distance_bot_meet <= 400:
+            if distance_bot_meet <= 80:
                 print 'Stop the bot!'
                 c.send('stop')
+                time.sleep(20)
                 # while True:
                 #     direction = goto_target_point(img, POST_POINT)
                 #     if direction == 'forward':

@@ -5,7 +5,7 @@ from math import atan, degrees, atan2
 import urllib
 import socket
 # import cv2.cv as cv
-POST_POINTS = (1324, 621) #should hard code before game
+POST_POINTS = (1388, 598) #should hard code before game
 POST_RADIUS = 240
 
 # s = socket.socket()
@@ -96,6 +96,7 @@ def move_towardds_post(image):
         #         centerf = 0, areaf=0, radiusf=0
 
     cv2.line(image, centerf, POST_POINTS, (0, 255, 0), 3)
+
     cv2.line(image, centerb, POST_POINTS, (0, 255, 0), 3)
     show_image(image)
 
