@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import time
-from math import atan, degrees
+from math import atan, atan2, degrees
 import urllib
 import socket
 # import cv2.cv as cv
@@ -11,6 +11,8 @@ url = "http://10.7.170.8:8080/shot.jpg"
 url_up = "http://10.7.170.27:8080/shot.jpg"
 
 POST_POINTS_FRONT = (1365, 619)  # should hard code before game
+CLOSE_TO_POST_UPPER = (1153, 484)  # should hard code before game
+CLOSE_TO_POST_LOWER = (1155, 751)  # should hard code before game
 WINDOW_NAME = "GreenBallTracker"
 POST_RADIUS = 240
 port = 12345
@@ -29,6 +31,12 @@ print "socket is listening"
 
 c, addr = s.accept()
 print 'Got connection from', addr
+
+
+def angle_for_dj(point1, point2, post_point):
+    a0 = atan2(point2[1] - point1[1], point2[0] - point1[0])
+    a1 = atan2(post_point[1] - point1[1], post_point[0] - point1[0])
+    return degrees(a1 - a0)
 
 
 def get_slope(point):
@@ -159,9 +167,9 @@ def goto_post(image, image_up):
     radius = 0
     angle_for_reference = angle_for_dj(centerb, centerf, POST_POINTS_FRONT)
 
+    turn = False
     if len(cnts) > 0:
         # centroid
-        turn = False
         cnts1 = max(cnts, key=cv2.contourArea)
         ((x, y), radius) = cv2.minEnclosingCircle(cnts1)
         M = cv2.moments(cnts1)
@@ -207,6 +215,24 @@ def goto_post(image, image_up):
             cv2.imshow(WINDOW_NAME, image)
             if cv2.waitKey(1) & 0xFF == 27:
                 pass
+    elif (centerf[0] > CLOSE_TO_POST_UPPER[0] and
+          centerf[1] < CLOSE_TO_POST_UPPER[1]):
+        if centerf[0] + 20 > centerb[0] and centerf[0] - 20 < centerb[0] and\
+           centerf[1] > centerb[1]:
+            print "Move Forward"
+            c.send("forward")
+        else:
+            print "Move Right"
+            c.send("right")
+    elif (centerf[0] > CLOSE_TO_POST_LOWER[0] and
+          centerf[1] > CLOSE_TO_POST_LOWER[1]):
+        if centerf[0] + 20 > centerb[0] and centerf[0] - 20 < centerb[0] and\
+           centerf[1] < centerb[1]:
+            print "Move Forward"
+            c.send("forward")
+        else:
+            print "Move Right"
+            c.send("right")
     else:
         direction = get_direction(slopeb, slopef)
         c.send(direction)
