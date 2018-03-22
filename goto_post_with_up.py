@@ -10,11 +10,12 @@ s = socket.socket()
 url = "http://10.7.170.8:8080/shot.jpg"
 url_up = "http://10.7.170.27:8080/shot.jpg"
 
-POST_POINTS_FRONT = (1365, 619)  # should hard code before game
+POST_POINTS_BACK = (1465, 619)  # should hard code before game
 CLOSE_TO_POST_UPPER = (1153, 484)  # should hard code before game
 CLOSE_TO_POST_LOWER = (1155, 751)  # should hard code before game
 WINDOW_NAME = "GreenBallTracker"
 POST_RADIUS = 240
+POST_FOUND = False
 port = 12345
 counter = 0
 # Next bind to the port
@@ -41,46 +42,80 @@ def angle_for_dj(point1, point2, post_point):
 
 def get_slope(point):
     try:
-        slope = ((POST_POINTS_FRONT[0] - point[0]) /
-                 float((POST_POINTS_FRONT[1] - point[1])))
+        slope = ((POST_POINTS_BACK[0] - point[0]) /
+                 float((POST_POINTS_BACK[1] - point[1])))
     except:
         return 90
     print slope
     return degrees(atan(slope))
 
 
-def get_direction(slopeb, slopef, reversed=False):
+def get_direction(slopeb, slopef):
+    print 'slopef: ', slopef
+    print 'slopeb: ', slopeb
+    if slopeb == slopef:
+        return "Condition not handled yet"
     if slopeb > 0 and slopef > 0:
         if slopef > slopeb:
-            direction = 'right'
+            return 'left'
         elif slopeb > slopef:
-            direction = 'left'
+            return 'right'
+
     elif slopef < 0 and slopeb < 0:
         slopeb = 180 + slopeb
         slopef = 180 + slopef
         if slopef > slopeb:
-            direction = 'right'
+            return 'left'
         elif slopeb > slopef:
-            direction = 'left'
+            return 'right'
+
     elif slopef < 0 and slopeb > 0:
         slopef = 180 + slopef
         if slopeb < slopef:
-            direction = 'right'
+            return 'left'
         elif slopef < slopeb:
-            direction = 'not expected condition please recheck 1'
+            return 'error: not expected condition please recheck 1'
 
     elif slopeb < 0 and slopef > 0:
         slopeb = 180 + slopeb
         if slopef < slopeb:
-            direction = 'left'
+            return 'right'
         elif slopeb < slopef:
-            direction = 'not expected condition please recheck 2'
-    if reversed:
-        if direction == 'right':
-            direction = 'left'
-        else:
-            direction = 'right'
-    return direction
+            return 'error: not expected condition please recheck 2'
+
+
+def get_direction_lower(slopeb, slopef):
+    print 'slopef: ', slopef
+    print 'slopeb: ', slopeb
+    if slopeb == slopef:
+        return "Condition not handled yet"
+    if slopeb > 0 and slopef > 0:
+        if slopef > slopeb:
+            return 'right'
+        elif slopeb > slopef:
+            return 'left'
+
+    elif slopef < 0 and slopeb < 0:
+        slopeb = 180 + slopeb
+        slopef = 180 + slopef
+        if slopef > slopeb:
+            return 'right'
+        elif slopeb > slopef:
+            return 'left'
+
+    elif slopef < 0 and slopeb > 0:
+        slopef = 180 + slopef
+        if slopeb < slopef:
+            return 'right'
+        elif slopef < slopeb:
+            return 'error: not expected condition please recheck 1'
+
+    elif slopeb < 0 and slopef > 0:
+        slopeb = 180 + slopeb
+        if slopef < slopeb:
+            return 'left'
+        elif slopeb < slopef:
+            return 'error: not expected condition please recheck 2'
 
 
 def goto_post(image, image_up):
@@ -165,10 +200,31 @@ def goto_post(image, image_up):
     nearest_one = (0, 0)
     max_y = 0
     radius = 0
-    angle_for_reference = angle_for_dj(centerb, centerf, POST_POINTS_FRONT)
+    angle_for_reference = angle_for_dj(centerb, centerf, POST_POINTS_BACK)
+    angle_for_post = angle_for_dj(centerb, centerf, POST_POINTS_BACK)
 
     turn = False
-    if len(cnts) > 0:
+    if centerf[1] > CLOSE_TO_POST_UPPER[1] and centerf[0] > CLOSE_TO_POST_UPPER[0] and\
+       centerf[1] < CLOSE_TO_POST_LOWER[1] and centerf[0] > CLOSE_TO_POST_LOWER[0] and\
+       centerb[1] > CLOSE_TO_POST_UPPER[1] and centerb[0] > CLOSE_TO_POST_UPPER[0] and\
+       centerb[1] < CLOSE_TO_POST_LOWER[1] and centerb[0] > CLOSE_TO_POST_LOWER[0] or \
+       POST_FOUND:
+        POST_FOUND = True
+        if (angle_for_post < 205 and angle_for_post > 165 or
+           angle_for_post > -205 and angle_for_post < -165):
+            print 'back'
+            c.send('back')
+            time.sleep(3)
+            c.send('stop')
+            print 'drop'
+            c.send('ball_drop')
+        else:
+            direction = get_direction_lower(slopeb, slopef)
+            print direction
+            c.send(direction)
+            time.sleep(0.1)
+            c.send('stop')
+    elif len(cnts) > 0:
         # centroid
         cnts1 = max(cnts, key=cv2.contourArea)
         ((x, y), radius) = cv2.minEnclosingCircle(cnts1)
@@ -236,11 +292,11 @@ def goto_post(image, image_up):
     else:
         direction = get_direction(slopeb, slopef)
         c.send(direction)
-        print 'Seek'
+        print 'Seek ' + direction
     if turn:
         direction = get_direction(slopeb, slopef)
         c.send(direction)
-        print 'Seek'
+        print 'Seek ' + direction
     return None
 
 
