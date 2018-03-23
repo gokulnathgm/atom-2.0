@@ -11,7 +11,7 @@ POST_EDGE1 = (1387, 401)
 POST_EDGE2 = (1389, 626)
 CORNER_POINT1 = (1201, 118)
 CORNER_POINT2 = (1217, 931)
-center_front, center_back = (), ()
+center_front, center_back, initial = (), (), True
 
 url = "http://10.7.170.27:8080/shot.jpg"
 WINDOW_NAME = 'Aerial View'
@@ -56,39 +56,6 @@ def get_direction(slopef, slopeb):
         slopeb = 180 + slopeb
         if slopef < slopeb:
             return 'right'
-        elif slopeb < slopef:
-            return 'error: not expected condition please recheck 2'
-
-def get_direction_lower(slopef, slopeb):
-    print 'slopef: ', slopef
-    print 'slopeb: ', slopeb
-    if slopeb == slopef:
-        return "Condition not handled yet"
-    if slopeb > 0 and slopef > 0:
-        if slopef > slopeb:
-            return 'right'
-        elif slopeb > slopef:
-            return 'left'
-
-    elif slopef < 0 and slopeb < 0:
-        slopeb = 180 + slopeb
-        slopef = 180 + slopef
-        if slopef > slopeb:
-            return 'right'
-        elif slopeb > slopef:
-            return 'left'
-
-    elif slopef < 0 and slopeb > 0:
-        slopef = 180 + slopef
-        if slopeb < slopef:
-            return 'right'
-        elif slopef < slopeb:
-            return 'error: not expected condition please recheck 1'
-
-    elif slopeb < 0 and slopef > 0:
-        slopeb = 180 + slopeb
-        if slopef < slopeb:
-            return 'left'
         elif slopeb < slopef:
             return 'error: not expected condition please recheck 2'
 
@@ -180,6 +147,12 @@ def goto_target_point(image, target_point):
     cv2.circle(image, MEET_POINT, 3, (255, 0, 0), 3)
     show_image(image)
 
+    if initial:
+        slope_front = get_slope(center_front)
+        slope_back = get_slope(center_back)
+        direction = get_direction(slope_front, slope_back)
+        initial = False
+
     # check if bot is in the other half of the MEET_POINT wrt the post
     if center_front[0] < target_point[0] and center_back[0] < target_point[0]:
         print 'Upper Half!'
@@ -189,9 +162,7 @@ def goto_target_point(image, target_point):
             print 'Move straight to meet point...'
             return 'forward'
         else:
-            slope_front = get_slope(center_front)
-            slope_back = get_slope(center_back)
-            return get_direction(slope_front, slope_back)
+            return direction
 
     if center_front[0] > target_point[0] and center_back[0] > target_point[0]:
         print 'Lower Half!'
@@ -203,12 +174,9 @@ def goto_target_point(image, target_point):
                 print 'Move straight to meet point...'
                 return 'forward_down'
             else:
-                return 'right'
+                return direction
         else:
-            # slope_front = get_slope(center_front)
-            # slope_back = get_slope(center_back)
-            # return get_direction_lower(slope_front, slope_back)
-            return 'right'
+            return direction
     else:
         print 'Middle region'
         angle = three_point_angle(center_back, center_front, target_point)
@@ -218,9 +186,7 @@ def goto_target_point(image, target_point):
                     center_back[1] > center_front[1] > target_point[1]):
                 print 'Move straight to meet point...'
                 return 'forward'
-        slope_front = get_slope(center_front)
-        slope_back = get_slope(center_back)
-        return get_direction(slope_front, slope_back)
+        return direction
 
 
 
