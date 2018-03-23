@@ -5,13 +5,13 @@ from math import sqrt, acos, pi, degrees, atan
 import urllib
 import socket
 
-POST_POINT = (1395, 494)
-MEET_POINT = (1093, 517)
-POST_EDGE1 = (1387, 401)
-POST_EDGE2 = (1389, 626)
-CORNER_POINT1 = (1201, 118)
-CORNER_POINT2 = (1217, 931)
-center_front, center_back, initial = (), (), True
+POST_POINT = (1375, 505)
+MEET_POINT = (1112, 534)
+POST_EDGE1 = (1361, 385)
+POST_EDGE2 = (1368, 616)
+CORNER_POINT1 = (1242, 96)
+CORNER_POINT2 = (1223, 916)
+center_front, center_back, initial, direction = (), (), True, 'right'
 
 url = "http://10.7.170.27:8080/shot.jpg"
 WINDOW_NAME = 'Aerial View'
@@ -85,8 +85,7 @@ def two_point_distance(p0, p1):
 
 
 def goto_target_point(image, target_point):
-    global center_front, center_back
-
+    global center_front, center_back, initial, direction
     image_x, image_y, color_code = image.shape
     # Blur the image to reduce noise
     blur = cv2.GaussianBlur(image, (5, 5), 0)
