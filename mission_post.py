@@ -5,13 +5,15 @@ from math import sqrt, acos, pi, degrees, atan
 import urllib
 import socket
 
-POST_POINT = (1375, 505)
-MEET_POINT = (1112, 534)
-POST_EDGE1 = (1361, 385)
-POST_EDGE2 = (1368, 616)
-CORNER_POINT1 = (1242, 96)
-CORNER_POINT2 = (1223, 916)
-center_front, center_back, initial, direction = (), (), True, 'right'
+AREA_LOWER = 0
+AREA_UPPER = 3000
+POST_POINT = (1368, 520)
+MEET_POINT = (1118, 525)
+POST_EDGE1 = (1365, 398)
+POST_EDGE2 = (1364, 618)
+CORNER_POINT1 = (1244, 100)
+CORNER_POINT2 = (1269, 929)
+center_front, center_back = (), ()
 
 url = "http://10.7.170.27:8080/shot.jpg"
 WINDOW_NAME = 'Aerial View'
@@ -61,8 +63,11 @@ def get_direction(slopef, slopeb):
 
 
 def get_slope(point):
-    slope = (POST_POINT[0] - point[0]) / float((POST_POINT[1] - point[1]))
-    return  degrees(atan(slope))
+    try:
+        slope = (POST_POINT[0] - point[0]) / float((POST_POINT[1] - point[1]))
+    except:
+        return 90
+    return degrees(atan(slope))
 
 
 def show_image(image):
@@ -72,6 +77,7 @@ def show_image(image):
     if cv2.waitKey(1) & 0xFF == 27:
         pass
     # cv2.waitKey(0)
+
 
 def three_point_angle(p0, p1, p2):
     a = (p1[0] - p0[0]) ** 2 + (p1[1] - p0[1]) ** 2
@@ -85,7 +91,8 @@ def two_point_distance(p0, p1):
 
 
 def goto_target_point(image, target_point):
-    global center_front, center_back, initial, direction
+    global center_front, center_back
+
     image_x, image_y, color_code = image.shape
     # Blur the image to reduce noise
     blur = cv2.GaussianBlur(image, (5, 5), 0)
@@ -117,41 +124,48 @@ def goto_target_point(image, target_point):
     # cv2.waitKey(0)
     center_back = 0
     area_back = 0
-    radius_back = 0
 
     if len(cnts_back) > 0:
-        cntsb = max(cnts_back, key=cv2.contourArea)
-        ((xb, yb), radius_back) = cv2.minEnclosingCircle(cntsb)
-        M = cv2.moments(cntsb)
+        found_contour = False
+        for cntsb in cnts_back:
+            M = cv2.moments(cntsb)
+            area_back = M["m00"]
+            if area_back >= AREA_LOWER and area_back <= AREA_UPPER:
+                print "MY AREA FRONT", area_back
+                found_contour = True
+                break
+        if not found_contour:
+            return 'stop'
         center_back = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-        area_back = M["m00"]
-        cv2.circle(image, center_back, 3, (255, 0, 0), 3)
-        #   if not area_back >'some value':  check the area for duble check
-        #   center_back = 0, area_back=0, radius_back=0
+        if center_back != 0:
+            cv2.circle(image, center_back, 3, (255, 0, 0), 3)
+        else:
+            return 'stop'
 
     center_front = 0
     area_front = 0
-    radius_front = 0
 
     if len(cnts_front) > 0:
-        cntsf = max(cnts_front, key=cv2.contourArea)
-        ((xb, yb), radius_front) = cv2.minEnclosingCircle(cntsf)
-        M = cv2.moments(cntsf)
+        found_contour = False
+        for cntsf in cnts_front:
+            M = cv2.moments(cntsf)
+            area_front = M["m00"]
+            if area_front >= AREA_LOWER and area_front <= AREA_UPPER:
+                print "MY AREA FRONT", area_front
+                found_contour = True
+                break
+        if not found_contour:
+            return 'stop'
         center_front = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-        area_front = M["m00"]
-        cv2.circle(image, center_front, 3, (255, 0, 0), 3)
-        #   if not area_back >'some value':  check the area for double check
-        #   center_front = 0, area_front=0, radius_front=0
+        if center_front != 0:
+            cv2.circle(image, center_front, 3, (255, 0, 0), 3)
+        else:
+            return 'stop'
 
     cv2.circle(image, MEET_POINT, 3, (255, 0, 0), 3)
     show_image(image)
-
-    if initial:
-        slope_front = get_slope(center_front)
-        slope_back = get_slope(center_back)
-        direction = get_direction(slope_front, slope_back)
-        initial = False
-
+    if center_back == 0 or center_front == 0:
+        return 'stop'
     # check if bot is in the other half of the MEET_POINT wrt the post
     if center_front[0] < target_point[0] and center_back[0] < target_point[0]:
         print 'Upper Half!'
@@ -161,7 +175,9 @@ def goto_target_point(image, target_point):
             print 'Move straight to meet point...'
             return 'forward'
         else:
-            return direction
+            slope_front = get_slope(center_front)
+            slope_back = get_slope(center_back)
+            return get_direction(slope_front, slope_back)
 
     if center_front[0] > target_point[0] and center_back[0] > target_point[0]:
         print 'Lower Half!'
@@ -173,9 +189,9 @@ def goto_target_point(image, target_point):
                 print 'Move straight to meet point...'
                 return 'forward_down'
             else:
-                return direction
+                return 'right'
         else:
-            return direction
+            return 'right'
     else:
         print 'Middle region'
         angle = three_point_angle(center_back, center_front, target_point)
@@ -185,7 +201,9 @@ def goto_target_point(image, target_point):
                     center_back[1] > center_front[1] > target_point[1]):
                 print 'Move straight to meet point...'
                 return 'forward'
-        return direction
+        slope_front = get_slope(center_front)
+        slope_back = get_slope(center_back)
+        return get_direction(slope_front, slope_back)
 
 
 
@@ -193,11 +211,13 @@ if __name__ == "__main__":
 
     while True:
         lower = False
+        drop = False
         # image = cv2.imread("/home/qburst/robot/entethala.jpg")
         imgResp = urllib.urlopen(url)
         imgNp = np.array(bytearray(imgResp.read()), dtype=np.uint8)
         img = cv2.imdecode(imgNp, -1)
         direction = goto_target_point(img, MEET_POINT)
+        print 'direction: ', direction, center_front
         pos = 'bottom' if center_front[1] > POST_POINT[1] else 'top'
         if direction.endswith('_down'):
             lower = True
@@ -211,18 +231,43 @@ if __name__ == "__main__":
         print 'distance_bot_target: ', distance_bot_meet
         if distance_bot_meet <= 80:
             c.send('stop')
-            time.sleep(20)
+            while True:
+                direction_to_post = goto_target_point(img, POST_POINT)
+                c.send(direction_to_post)
+                if direction != 'forward':
+                    time.sleep(0.15)
+                    c.send('stop')
+                distance_bot_post = two_point_distance(POST_POINT, center_front)
+                print 'distance_bot_post: ', distance_bot_post
+                if distance_bot_post <= 150:
+                    # c.send('stop')
+                    c.send('dump')
+                    drop = True
+                    print 'Drop command to be executed....................................'
+                    break
+                imgResp = urllib.urlopen(url)
+                imgNp = np.array(bytearray(imgResp.read()), dtype=np.uint8)
+                img = cv2.imdecode(imgNp, -1)
+        # if drop:
+        #     break
         if direction == 'forward':
+            print pos, '*******************'
             print 'center_front', center_front[1]
             if lower:
-                if pos == 'top':
-                    if center_front[1] > POST_POINT[1]:
-                        c.send('stop')
-                        break
-                else:
-                    if center_front[1] < POST_POINT[1]:
-                        c.send('stop')
-                        break
+                # if pos == 'top':
+                #     if center_front[1] > POST_POINT[1]:
+                #         c.send('stop')
+                #         break
+                # else:
+                #     print '###############'
+                #     print center_front[1], POST_POINT[1]
+                #     if center_front[1] < POST_POINT[1]:
+                #         c.send('stop')
+                #         break
+                if center_back[1] >= POST_EDGE1[1] and center_back[1] <= POST_EDGE2[1]:
+                    print 'center_back', center_back[1]
+                    c.send("stop")
+                    break
 
             distance_bot_meet = two_point_distance(MEET_POINT, center_front)
             print 'distance_bot_target: ', distance_bot_meet
