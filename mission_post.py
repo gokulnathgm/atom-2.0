@@ -254,16 +254,6 @@ if __name__ == "__main__":
             print pos, '*******************'
             print 'center_front', center_front[1]
             if lower:
-                # if pos == 'top':
-                #     if center_front[1] > POST_POINT[1]:
-                #         c.send('stop')
-                #         break
-                # else:
-                #     print '###############'
-                #     print center_front[1], POST_POINT[1]
-                #     if center_front[1] < POST_POINT[1]:
-                #         c.send('stop')
-                #         break
                 if center_back[1] >= POST_EDGE1[1] and center_back[1] <= POST_EDGE2[1]:
                     print 'center_back', center_back[1]
                     c.send("stop")
@@ -275,12 +265,3 @@ if __name__ == "__main__":
                 print 'Stop the bot!'
                 c.send('stop')
                 time.sleep(20)
-                # while True:
-                #     direction = goto_target_point(img, POST_POINT)
-                #     if direction == 'forward':
-                #         distance_bot_post = two_point_distance(POST_POINT, center_front)
-                #         if distance_bot_post <= 100:
-                #             print 'Drop the ball!'
-                #             break
-                #     else:
-                #         print 'Keep turning to locate the post...'
