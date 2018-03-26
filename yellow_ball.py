@@ -135,36 +135,15 @@ def track(image):
     delta = datetime.now() - time_counter
     print 'Delta: ', delta.seconds
     if delta.seconds > 20:
-        post_timeout = datetime.now()
-        drop_timeout = datetime.now()
         status = ''
         while True:
-            if status == "drop":
+            if status == 'drop':
                 image = img
                 break
             imgResp = urllib.urlopen(url)
             imgNp = np.array(bytearray(imgResp.read()),dtype=np.uint8)
             img = cv2.imdecode(imgNp,-1)
             status = goto_post(img)
-            if status == "right":
-                post_delta = datetime.now() - post_timeout
-                if post_delta.seconds > 10:
-                    image = img
-                    time_counter = datetime.now()
-                    break
-            else: 
-                post_timeout = datetime.now()
-            if status == "forward":
-                drop_delta = datetime.now() - drop_timeout
-                if drop_delta.seconds > 18:
-                    c.send("dump")
-                    image = img
-                    time_counter = datetime.now()
-                    break
-                print 'Drop delta', drop_delta
-            else:
-                drop_timeout = datetime.now()
-            
 
     image_x, image_y, color_code = image.shape
     # print 'x', image_x, 'y', image_y, color_code

@@ -12,7 +12,6 @@ print "Socket successfully created"
 
 url = "http://10.7.170.8:8080/shot.jpg"
 url_top = "http://10.7.170.27:8080/shot.jpg"
-# url="http://10.7.120.82:8080//shot.jpg"
 
 WINDOW_NAME = "GreenBallTracker"
 PICK_RADIUS = 160
@@ -28,12 +27,11 @@ print 'Got connection from', addr
 AREA_LOWER = 0
 AREA_UPPER = 3000
 POST_POINT = (1379, 506)
-MEET_POINT = (1119, 549)
+MEET_POINT = (1078, 551)
 POST_EDGE1 = (1364, 460)
 POST_EDGE2 = (1361, 566)
 CORNER_POINT1 = (1249, 93)
 CORNER_POINT2 = (1259, 921)
-center_front, center_back = (), ()
 
 
 def get_direction(slopef, slopeb):
@@ -72,7 +70,7 @@ def get_direction(slopef, slopeb):
 
 def get_slope(point):
     try:
-        slope = (POST_POINT[0] - point[0]) / float((POST_POINT[1] - point[1]))
+        slope = (MEET_POINT[0] - point[0]) / float((MEET_POINT[1] - point[1]))
     except:
         return 90
     return degrees(atan(slope))
@@ -139,7 +137,7 @@ def goto_target_point(image, target_point):
             M = cv2.moments(cntsb)
             area_back = M["m00"]
             if area_back >= AREA_LOWER and area_back <= AREA_UPPER:
-                print "MY AREA FRONT", area_back
+                print "MY AREA BACK", area_back
                 found_contour = True
                 break
         if not found_contour:
@@ -189,17 +187,14 @@ def goto_target_point(image, target_point):
 
     if center_front[0] > target_point[0] and center_back[0] > target_point[0]:
         print 'Lower Half!'
-        CORNER_POINT = CORNER_POINT2 if center_front[1] < POST_POINT[1] else CORNER_POINT1
-        angle = three_point_angle(center_back, center_front, CORNER_POINT)
+        angle = three_point_angle(center_back, center_front, MEET_POINT)
         print 'Angle: ', angle
-        if (angle >= 165 and angle <= 180):
-            if (center_front[1] < POST_POINT[1] and center_front[1] > center_back[1]) or (center_front[1] > POST_POINT[1] and center_front[1] < center_back[1]):
-                print 'Move straight to meet point...'
-                return 'forward_down'
-            else:
-                return 'right'
+        if (angle >= 165 and angle <= 180) and (center_front[0] < center_back[0]):
+            return 'forward'
         else:
-            return 'right'
+            slope_front = get_slope(center_front)
+            slope_back = get_slope(center_back)
+            return get_direction(slope_front, slope_back)
     else:
         print 'Middle region'
         angle = three_point_angle(center_back, center_front, target_point)
@@ -213,6 +208,95 @@ def goto_target_point(image, target_point):
         slope_back = get_slope(center_back)
         return get_direction(slope_front, slope_back)
 
+def goto_post(image):
+    global time_counter
+
+    image_x, image_y, color_code = image.shape
+    # print 'x', image_x, 'y', image_y, color_code
+
+    # Blur the image to reduce noise
+    blur = cv2.GaussianBlur(image, (5, 5), 0)
+
+    # Convert BGR to HSV
+    hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
+
+    lower_green = np.array([90, 100, 100])
+    upper_green = np.array([110, 255, 255])
+
+    # Threshold the HSV image to get only green colors
+    mask = cv2.inRange(hsv, lower_green, upper_green)
+
+    # Blur the mask
+    bmask = cv2.GaussianBlur(mask, (5, 5), 0)
+
+    _, cnts, _ = cv2.findContours(bmask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # cnts = cnts[-2]
+    center = None
+    nearest_one = (0, 0)
+    max_y = 0
+    radius = 0
+
+    if len(cnts) > 0:
+        cnts1 = max(cnts, key=cv2.contourArea)
+        ((x, y), radius) = cv2.minEnclosingCircle(cnts1)
+        M = cv2.moments(cnts1)
+        center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+        # area = M["m00"]
+        # peri = cv2.arcLength(cnts1, True)
+        # approx = cv2.approxPolyDP(cnts1, 0.04 * peri, True)
+        # contour_edges = len(approx)
+        # print 'approx: ', contour_edges
+
+        # only proceed if the radius meets a minimum size
+        if radius > 30:  # and contour_edges >= 4 and area >= 35:
+            # draw the circle and centroid on the frame,
+            # then update the list of tracked pointsx 1080 y 1920 3
+
+            nearest_one = (int(x), int(y))
+            radius = int(radius)
+            print 'radius: ', radius
+            cv2.circle(image, nearest_one, 3, (255, 0, 0), 3)
+            ball_x, ball_y = nearest_one
+
+            if (image_y / 2) > (ball_x + 500):
+                print "Post: Move Left"
+                c.send("left")
+                time.sleep(0.15)
+                c.send("stop")
+                return "left"
+
+            elif (image_y / 2) < (ball_x - 500):
+                print "Post: Move Right"
+                c.send("right")
+                time.sleep(0.15)
+                c.send("stop")
+                return "right"
+
+            else:
+                if radius > 165:
+                    print "Post: Drop"
+                    c.send("drop")
+                    time.sleep(10)
+                    time_counter = datetime.now()
+                    return "drop"
+                else:
+                    print "Post: Move Forward"
+                    c.send("forward")
+                    time.sleep(0.15)
+                    c.send("stop")
+                    return "forward"
+
+            cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
+            cv2.resizeWindow(WINDOW_NAME, 600, 600)
+            cv2.imshow(WINDOW_NAME, image)
+            if cv2.waitKey(1) & 0xFF == 27:
+                center = None
+    else:
+        print 'Post: Seek, right'
+        c.send("right")
+        return "right"
+
 
 def track(image):
     global time_counter, initial
@@ -223,64 +307,39 @@ def track(image):
         time_counter = datetime.now()
     delta = datetime.now() - time_counter
     print 'Delta: ', delta.seconds
-    if delta.seconds > 5:
-        status = False
+    if delta.seconds > 1:
+        status = ''
 
         while True:
-            lower = False
             imgResp = urllib.urlopen(url_top)
             imgNp = np.array(bytearray(imgResp.read()), dtype=np.uint8)
             img = cv2.imdecode(imgNp, -1)
             direction = goto_target_point(img, MEET_POINT)
-            print 'direction: ', direction, center_front
-            pos = 'bottom' if center_front[1] > POST_POINT[1] else 'top'
             if direction.endswith('_down'):
-                lower = True
                 direction = direction.replace('_down', '')
             print 'direction: ', direction
             c.send(direction)
             if direction != 'forward':
                 time.sleep(0.15)
                 c.send('stop')
+            if center_front == 0:
+                return None
             distance_bot_meet = two_point_distance(MEET_POINT, center_front)
             print 'distance_bot_target: ', distance_bot_meet
             if distance_bot_meet <= 80:
                 c.send('stop')
-                while True:
-                    direction_to_post = goto_target_point(img, POST_POINT)
-                    c.send(direction_to_post)
-                    if direction != 'forward':
-                        time.sleep(0.15)
-                        c.send('stop')
-                    distance_bot_post = two_point_distance(POST_POINT, center_front)
-                    print 'distance_bot_post: ', distance_bot_post
-                    if distance_bot_post <= 150:
-                        c.send('stop')
-                        c.send('dump')
-                        print 'Drop command to be executed....................................'
-                        time.sleep(10)
-                        status = True
-                        break
-
-                    imgResp = urllib.urlopen(url_top)
-                    imgNp = np.array(bytearray(imgResp.read()), dtype=np.uint8)
-                    img = cv2.imdecode(imgNp, -1)
-            if status:
                 break
-            if direction == 'forward':
-                print 'center_front', center_front[1]
-                if lower:
-                    if center_back[1] >= POST_EDGE1[1] and center_back[1] <= POST_EDGE2[1]:
-                        print 'center_back', center_back[1]
-                        c.send("stop")
-                        break
 
-                # distance_bot_meet = two_point_distance(MEET_POINT, center_front)
-                # print 'distance_bot_target: ', distance_bot_meet
-                # if distance_bot_meet <= 80:
-                #     print 'Stop the bot!'
-                #     c.send('stop')
-                #     time.sleep(20)
+        while True:
+            if status == 'drop':
+                image = img
+                break
+            imgResp = urllib.urlopen(url)
+            imgNp = np.array(bytearray(imgResp.read()), dtype=np.uint8)
+            img = cv2.imdecode(imgNp, -1)
+            status = goto_post(img)
+
+
     image_x, image_y, color_code = image.shape
     # print 'x', image_x, 'y', image_y, color_code
 
