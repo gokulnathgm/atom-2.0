@@ -95,11 +95,15 @@ def goto_post(image):
             if (image_y / 2) > (ball_x + 500):
                 print "Post: Move Left"
                 c.send("left")
+                time.sleep(0.15)
+                c.send("stop")
                 return "left"
 
             elif (image_y / 2) < (ball_x - 500):
                 print "Post: Move Right"
                 c.send("right")
+                time.sleep(0.15)
+                c.send("stop")
                 return "right"
 
             else:
