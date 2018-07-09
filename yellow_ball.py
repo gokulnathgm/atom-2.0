@@ -44,7 +44,6 @@ def goto_post(image):
     '''
 
     image_x, image_y, color_code = image.shape
-    # print 'x', image_x, 'y', image_y, color_code
 
     # Blur the image to reduce noise
     blur = cv2.GaussianBlur(image, (5, 5), 0)
